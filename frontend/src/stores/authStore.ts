@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
-import type { User, LoginCredentials, RegisterCredentials } from '@/types/auth.types';
+import api from '@/lib/api';
+import type { User, LoginCredentials, RegisterCredentials, PlanType } from '@/types/auth.types';
 
 interface AuthStore {
   user: User | null;
@@ -11,12 +12,41 @@ interface AuthStore {
   loginWithGoogle: () => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
+  syncUserWithBackend: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   isLoading: true,
   isAuthenticated: false,
+
+  // Backend'e verify-token çağrısı yaparak kullanıcıyı DB ile senkronize eder
+  syncUserWithBackend: async () => {
+    try {
+      const response = await api.post<{
+        userId: string;
+        email: string;
+        fullName: string;
+        plan: string;
+      }>('/api/auth/verify-token');
+
+      const { userId, email, fullName, plan } = response.data;
+      set((state) => ({
+        user: state.user
+          ? {
+              ...state.user,
+              id: userId,
+              email: email || state.user.email,
+              fullName: fullName || state.user.fullName,
+              plan: (plan as PlanType) || state.user.plan,
+            }
+          : null,
+      }));
+    } catch {
+      // Backend erişilemezse Supabase bilgileriyle devam et
+      console.warn('Backend sync failed, using Supabase data only');
+    }
+  },
 
   initialize: async () => {
     try {
@@ -26,13 +56,16 @@ export const useAuthStore = create<AuthStore>((set) => ({
           user: {
             id: session.user.id,
             email: session.user.email ?? '',
-            fullName: session.user.user_metadata['full_name'] as string ?? '',
+            fullName: (session.user.user_metadata?.['full_name'] as string) ?? '',
             plan: 'free',
             createdAt: session.user.created_at,
           },
           isAuthenticated: true,
           isLoading: false,
         });
+
+        // Backend ile senkronize et (plan bilgisi vb.)
+        get().syncUserWithBackend();
       } else {
         set({ user: null, isAuthenticated: false, isLoading: false });
       }
@@ -47,14 +80,18 @@ export const useAuthStore = create<AuthStore>((set) => ({
           user: {
             id: session.user.id,
             email: session.user.email ?? '',
-            fullName: session.user.user_metadata['full_name'] as string ?? '',
+            fullName: (session.user.user_metadata?.['full_name'] as string) ?? '',
             plan: 'free',
             createdAt: session.user.created_at,
           },
           isAuthenticated: true,
+          isLoading: false,
         });
+
+        // Her auth değişikliğinde backend ile senkronize et
+        get().syncUserWithBackend();
       } else {
-        set({ user: null, isAuthenticated: false });
+        set({ user: null, isAuthenticated: false, isLoading: false });
       }
     });
   },
@@ -66,6 +103,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       set({ isLoading: false });
       throw new Error(error.message);
     }
+    // onAuthStateChange otomatik olarak user'ı set edecek
     set({ isLoading: false });
   },
 

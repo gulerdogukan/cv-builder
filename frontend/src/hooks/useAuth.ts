@@ -1,27 +1,18 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 
+/**
+ * Auth store'a kolay erişim hook'u.
+ * Initialize App.tsx'te yapılır, burada tekrar çağırmaya gerek yok.
+ */
 export function useAuth() {
-  const store = useAuthStore();
-
-  useEffect(() => {
-    store.initialize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return store;
+  return useAuthStore();
 }
 
+/**
+ * @deprecated ProtectedRoute component'i kullanın.
+ * Eski hook — geriye uyumluluk için tutuldu.
+ */
 export function useRequireAuth() {
   const { isAuthenticated, isLoading } = useAuthStore();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate('/login', { replace: true });
-    }
-  }, [isAuthenticated, isLoading, navigate]);
-
   return { isAuthenticated, isLoading };
 }

@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/authStore';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -7,14 +10,40 @@ import Editor from './pages/Editor';
 import Pricing from './pages/Pricing';
 
 function App() {
+  const initialize = useAuthStore((s) => s.initialize);
+
+  // Uygulama yüklendiğinde auth durumunu kontrol et
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
   return (
     <Routes>
+      {/* Herkese açık sayfalar */}
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/editor/:id" element={<Editor />} />
       <Route path="/pricing" element={<Pricing />} />
+
+      {/* Korumalı sayfalar */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/editor/:id"
+        element={
+          <ProtectedRoute>
+            <Editor />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 404 → Ana sayfa */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

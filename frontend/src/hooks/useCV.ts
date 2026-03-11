@@ -7,14 +7,27 @@ export function useCV() {
   const store = useCVStore();
 
   const fetchCVList = useCallback(async () => {
-    const response = await api.get<CV[]>('/api/cvs');
-    store.setCVList(response.data);
+    store.setIsLoading(true);
+    try {
+      const response = await api.get<CV[]>('/api/cvs');
+      store.setCVList(response.data);
+    } catch (err) {
+      console.error('CV listesi alınamadı:', err);
+      store.setCVList([]);
+    } finally {
+      store.setIsLoading(false);
+    }
   }, [store]);
 
   const fetchCV = useCallback(async (id: string) => {
-    const response = await api.get<CV>(`/api/cvs/${id}`);
-    store.setCurrentCV(response.data);
-    return response.data;
+    store.setIsLoading(true);
+    try {
+      const response = await api.get<CV>(`/api/cvs/${id}`);
+      store.setCurrentCV(response.data);
+      return response.data;
+    } finally {
+      store.setIsLoading(false);
+    }
   }, [store]);
 
   const createCV = useCallback(async (title: string) => {
