@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: cvbuilder-db
+    environment:
+      POSTGRES_DB: cvbuilder
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # .NET 8 Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cvbuilder-api
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=cvbuilder;Username=postgres;Password=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cvbuilder-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+    environment:
+      - VITE_API_BASE_URL=http://localhost:5000
+      - VITE_PDF_SERVICE_URL=http://localhost:3001
+
+  # PDF Generation Microservice
+  pdf-service:
+    build:
+      context: ./pdf-service
+      dockerfile: Dockerfile
+    container_name: cvbuilder-pdf
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+
+volumes:
+  pgdata:

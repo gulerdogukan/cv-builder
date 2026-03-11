@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #000;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm;
+    }
+    .header { text-align: center; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 12px; }
+    .header h1 { font-size: 22pt; letter-spacing: 2px; text-transform: uppercase; }
+    .contact-info { text-align: center; font-size: 9pt; color: #444; margin-top: 4px; }
+    .contact-info span::after { content: ' | '; }
+    .contact-info span:last-child::after { content: ''; }
+    .summary { margin-bottom: 14px; font-style: italic; font-size: 10pt; color: #333; }
+    .section { margin-bottom: 14px; }
+    .section-title { font-size: 12pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #999; padding-bottom: 2px; margin-bottom: 8px; }
+    .experience-item, .education-item { margin-bottom: 10px; }
+    .item-header { font-size: 11pt; }
+    .item-date { font-size: 9pt; color: #666; }
+    .item-subtitle { font-size: 10pt; }
+    .item-desc { font-size: 10pt; margin-top: 2px; }
+    .location { font-size: 9pt; color: #666; }
+    .skill-tag { font-size: 10pt; }
+    .skill-tag::after { content: ' · '; }
+    .skill-tag:last-child::after { content: ''; }
+    .lang-item { font-size: 10pt; }
+    .cert-item { font-size: 10pt; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1>{{fullName}}</h1>
+      <div class="contact-info">
+        <span>{{email}}</span>
+        <span>{{phone}}</span>
+        <span>{{location}}</span>
+      </div>
+    </div>
+    <div class="summary">{{summary}}</div>
+    <div class="section">
+      <div class="section-title">Deneyim</div>
+      {{experienceList}}
+    </div>
+    <div class="section">
+      <div class="section-title">Eğitim</div>
+      {{educationList}}
+    </div>
+    <div class="section">
+      <div class="section-title">Beceriler</div>
+      {{skillsList}}
+    </div>
+    <div class="section">
+      <div class="section-title">Diller</div>
+      {{languagesList}}
+    </div>
+    <div class="section">
+      <div class="section-title">Sertifikalar</div>
+      {{certificationsList}}
+    </div>
+  </div>
+</body>
+</html>
