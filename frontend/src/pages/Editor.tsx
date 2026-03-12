@@ -13,7 +13,7 @@ type ViewMode = 'editor' | 'preview' | 'split';
 export default function Editor() {
   useSEO({ title: 'CV Düzenle', noIndex: true });
   const { id } = useParams<{ id: string }>();
-  const { currentCV, fetchCV, updateSection, isLoading } = useCV();
+  const { currentCV, fetchCV, updateSection, updateCVTitle, isLoading } = useCV();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const { exportPdf, isGenerating, error: pdfError } = usePdf();
@@ -42,8 +42,13 @@ export default function Editor() {
 
   const handleTitleSave = async () => {
     setIsEditingTitle(false);
-    if (!currentCV || titleInput === currentCV.title) return;
-    updateSection('personal', { ...currentCV.data.personal });
+    if (!currentCV || titleInput.trim() === currentCV.title) return;
+    try {
+      await updateCVTitle(currentCV.id, titleInput.trim() || 'Yeni CV');
+    } catch {
+      // title save failure is non-critical — silently restore
+      setTitleInput(currentCV.title);
+    }
   };
 
   const handleTemplateChange = (_template: TemplateType) => {};

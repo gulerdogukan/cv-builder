@@ -11,6 +11,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: cvbuilder-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: cvbuilder
       POSTGRES_USER: postgres
@@ -31,6 +32,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: cvbuilder-api
+    restart: unless-stopped
     ports:
       - "5000:5000"
     environment:
@@ -67,11 +69,13 @@ services:
       context: ./pdf-service
       dockerfile: Dockerfile
     container_name: cvbuilder-pdf
+    restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
       - PORT=3001
       - NODE_ENV=development
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5000
 
 volumes:
   pgdata:

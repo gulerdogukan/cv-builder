@@ -22,7 +22,14 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception: {Message}", ex.Message);
+            _logger.LogError(ex,
+                "Unhandled exception on {Method} {Path}: {Message}",
+                context.Request.Method,
+                context.Request.Path,
+                ex.Message);
+
+            // Don't overwrite a response that has already started streaming
+            if (context.Response.HasStarted) return;
 
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";

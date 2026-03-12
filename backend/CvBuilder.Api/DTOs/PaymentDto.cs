@@ -1,10 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace CvBuilder.Api.DTOs;
 
 public record InitiatePaymentRequest(
-    string PlanType,    // "one_time" | "monthly"
-    string FullName,
-    string Email,
-    string? PhoneNumber = null
+    [Required] string PlanType,    // "one_time" | "monthly"
+    [Required][MaxLength(255)] string FullName,
+    [Required][EmailAddress][MaxLength(255)] string Email,
+    [Phone][MaxLength(20)] string? PhoneNumber = null
 );
 
 public record InitiatePaymentResponse(

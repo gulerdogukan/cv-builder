@@ -25,6 +25,10 @@ export function useCV() {
       const response = await api.get<CV>(`/api/cvs/${id}`);
       store.setCurrentCV(response.data);
       return response.data;
+    } catch (err) {
+      console.error('CV yüklenemedi:', err);
+      store.setCurrentCV(null);
+      throw err;
     } finally {
       store.setIsLoading(false);
     }
@@ -65,6 +69,14 @@ export function useCV() {
     [store]
   );
 
+  const updateCVTitle = useCallback(async (id: string, title: string) => {
+    await api.put(`/api/cvs/${id}`, { title });
+    store.setTitle(title);
+    // Also sync cvList entry so Dashboard shows updated title
+    const updated = store.cvList.map((cv) => cv.id === id ? { ...cv, title } : cv);
+    store.setCVList(updated);
+  }, [store]);
+
   return {
     ...store,
     fetchCVList,
@@ -74,5 +86,6 @@ export function useCV() {
     deleteCV,
     duplicateCV,
     updateSection,
+    updateCVTitle,
   };
 }

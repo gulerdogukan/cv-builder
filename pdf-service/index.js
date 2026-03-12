@@ -7,7 +7,21 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// CORS — restrict to known origins; ALLOWED_ORIGINS env var is a comma-separated list
+const rawOrigins = process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5000';
+const allowedOrigins = rawOrigins.split(',').map((o) => o.trim()).filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. server-to-server calls from the .NET backend)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin '${origin}' not allowed`));
+  },
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json({ limit: '10mb' }));
 
 // ── Health check ──────────────────────────────────────────────────────────────
@@ -17,7 +31,8 @@ app.get('/health', (_req, res) => {
 
 // ── PDF generation ────────────────────────────────────────────────────────────
 app.post('/generate', async (req, res) => {
-  const { template = 'modern', data } = req.body;
+  const { template: rawTemplate = 'modern', data } = req.body;
+  const template = (typeof rawTemplate === 'string' ? rawTemplate : 'modern').toLowerCase().trim();
 
   if (!data) {
     return res.status(400).json({ error: 'CV data is required' });
@@ -25,7 +40,7 @@ app.post('/generate', async (req, res) => {
 
   const ALLOWED_TEMPLATES = ['modern', 'classic', 'minimal'];
   if (!ALLOWED_TEMPLATES.includes(template)) {
-    return res.status(400).json({ error: `Template '${template}' not found` });
+    return res.status(400).json({ error: `Template '${template}' not found. Allowed: ${ALLOWED_TEMPLATES.join(', ')}` });
   }
 
   const templatePath = path.join(__dirname, 'templates', `${template}.html`);
@@ -75,13 +90,17 @@ function esc(str) {
     .replace(/'/g, '&#039;');
 }
 
-/** YYYY-MM → "Oca 2023" formatına çevir */
+/** YYYY-MM → "Oca 2023" formatına çevir. Geçersiz girdi "" döner. */
 function fmtDate(ym) {
-  if (!ym) return '';
-  const [year, month] = ym.split('-');
+  if (!ym || typeof ym !== 'string') return '';
+  const parts = ym.trim().split('-');
+  const year = parts[0];
+  if (!year || !/^\d{4}$/.test(year)) return esc(ym); // fallback: escape as-is
+  if (parts.length < 2) return year; // year-only
   const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-  const m = parseInt(month, 10);
-  return month ? `${months[m - 1] || ''} ${year}` : year;
+  const m = parseInt(parts[1], 10);
+  if (isNaN(m) || m < 1 || m > 12) return year; // invalid month → year only
+  return `${months[m - 1]} ${year}`;
 }
 
 function populateTemplate(html, data) {

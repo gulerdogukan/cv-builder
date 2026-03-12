@@ -24,8 +24,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired, redirect to login
-      window.location.href = '/login';
+      // Token expired — redirect to login, preserving current path for post-login return
+      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?returnUrl=${returnUrl}`;
     }
     return Promise.reject(error);
   }

@@ -15,6 +15,7 @@ interface CVStore {
   setIsSaving: (isSaving: boolean) => void;
   setLastSaved: (date: Date) => void;
   setAtsScore: (score: number) => void;
+  setTitle: (title: string) => void;
 }
 
 export const useCVStore = create<CVStore>((set) => ({
@@ -61,5 +62,11 @@ export const useCVStore = create<CVStore>((set) => ({
     set((state) => {
       if (!state.currentCV) return state;
       return { currentCV: { ...state.currentCV, atsScore: score } };
+    }),
+
+  setTitle: (title) =>
+    set((state) => {
+      if (!state.currentCV) return state;
+      return { currentCV: { ...state.currentCV, title } };
     }),
 }));

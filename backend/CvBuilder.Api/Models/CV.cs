@@ -7,6 +7,7 @@ namespace CvBuilder.Api.Models;
 public class CV
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)] // Guid is set client-side via Guid.NewGuid()
     public Guid Id { get; set; }
 
     [Required]
@@ -28,6 +29,10 @@ public class CV
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    /// Optimistic concurrency token — concurrent update çakışmalarını yakalar
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 
     // Navigation
     [ForeignKey(nameof(UserId))]

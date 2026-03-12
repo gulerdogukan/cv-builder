@@ -11,5 +11,5 @@ public interface IPaymentService
 
     Task<(bool Success, string Message)> ProcessCallbackAsync(string token);
 
-    Task<PaymentStatusResponse> GetPaymentStatusAsync(Guid userId);
+    Task<PaymentStatusResponse?> GetPaymentStatusAsync(Guid userId);
 }

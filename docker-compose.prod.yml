@@ -8,6 +8,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: cvbuilder
       POSTGRES_USER: postgres
@@ -24,6 +25,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
@@ -34,9 +36,14 @@ services:
       - App__FrontendUrl=${FRONTEND_URL:-http://localhost}
       - App__CorsOrigins__0=${FRONTEND_URL:-http://localhost}
       - Anthropic__ApiKey=${ANTHROPIC_API_KEY}
+      - Supabase__Url=${SUPABASE_URL}
+      - Supabase__JwtSecret=${SUPABASE_JWT_SECRET}
+      - Supabase__WebhookSecret=${SUPABASE_WEBHOOK_SECRET}
       - Iyzico__ApiKey=${IYZICO_API_KEY}
       - Iyzico__SecretKey=${IYZICO_SECRET_KEY}
       - Iyzico__BaseUrl=https://api.iyzipay.com
+      - Iyzico__OneTimePrice=${IYZICO_ONE_TIME_PRICE:-99.0}
+      - Iyzico__MonthlyPrice=${IYZICO_MONTHLY_PRICE:-49.0}
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,6 +58,7 @@ services:
         - VITE_PDF_SERVICE_URL=${PDF_URL:-http://localhost:3001}
         - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
         - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
@@ -60,9 +68,11 @@ services:
     build:
       context: ./pdf-service
       dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
       - PORT=3001
       - NODE_ENV=production
+      - ALLOWED_ORIGINS=${FRONTEND_URL:-http://localhost},http://backend:8080
 
 volumes:
   pgdata:

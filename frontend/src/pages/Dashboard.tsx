@@ -12,6 +12,12 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
+
+  const showError = (msg: string) => {
+    setErrorToast(msg);
+    setTimeout(() => setErrorToast(null), 4000);
+  };
 
   useEffect(() => {
     fetchCVList();
@@ -23,7 +29,7 @@ export default function Dashboard() {
       const cv = await createCV('Yeni CV');
       navigate(`/editor/${cv.id}`);
     } catch {
-      // hata useCV hook'unda yönetilir
+      showError('CV oluşturulamadı. Lütfen tekrar deneyin.');
     } finally {
       setIsCreating(false);
     }
@@ -41,6 +47,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-muted/30">
+      {errorToast && (
+        <div className="fixed top-4 right-4 z-50 px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium bg-destructive text-destructive-foreground transition-all">
+          {errorToast}
+        </div>
+      )}
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">

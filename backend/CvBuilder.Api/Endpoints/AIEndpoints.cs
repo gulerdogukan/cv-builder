@@ -126,7 +126,7 @@ public static class AIEndpoints
             var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId.Value);
             if (user == null) return Results.NotFound();
 
-            ResetIfNewDay(user);
+            if (ResetIfNewDay(user)) await db.SaveChangesAsync();
             var isPaid = user.Plan == PlanType.Paid;
             var remaining = isPaid ? int.MaxValue : Math.Max(0, FreePlanDailyLimit - user.AiRequestsToday);
 
@@ -154,12 +154,12 @@ public static class AIEndpoints
         if (user.Plan == PlanType.Paid)
             return new RateLimitResult(true, int.MaxValue, "");
 
-        ResetIfNewDay(user);
+        var wasReset = ResetIfNewDay(user);
 
         if (user.AiRequestsToday >= FreePlanDailyLimit)
         {
             var resetAt = user.AiRequestsResetAt.AddDays(1).ToString("O");
-            await db.SaveChangesAsync();
+            if (wasReset) await db.SaveChangesAsync(); // reset persisted
             return new RateLimitResult(false, 0, resetAt);
         }
 
@@ -170,13 +170,18 @@ public static class AIEndpoints
         return new RateLimitResult(true, remaining, user.AiRequestsResetAt.AddDays(1).ToString("O"));
     }
 
-    private static void ResetIfNewDay(User user)
+    /// Gün değişmişse sayacı sıfırla. True döndürürse SaveChanges gerekir.
+    private static bool ResetIfNewDay(User user)
     {
-        var today = DateTime.UtcNow.Date;
-        if (user.AiRequestsResetAt.Date < today)
+        var today = DateTime.UtcNow.Date; // UTC midnight
+        // Npgsql may return DateTimeKind.Unspecified for timestamptz — force UTC so .Date comparison is correct
+        var resetAtUtc = DateTime.SpecifyKind(user.AiRequestsResetAt, DateTimeKind.Utc);
+        if (resetAtUtc.Date < today)
         {
             user.AiRequestsToday = 0;
-            user.AiRequestsResetAt = today;
+            user.AiRequestsResetAt = DateTime.SpecifyKind(today, DateTimeKind.Utc);
+            return true;
         }
+        return false;
     }
 }
