@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { useSEO } from '@/hooks/useSEO';
 
 function GoogleIcon() {
   return (
@@ -14,6 +15,7 @@ function GoogleIcon() {
 }
 
 export default function Register() {
+  useSEO({ title: 'Ücretsiz Kayıt Ol', description: 'CV Builder'a ücretsiz kaydolun, dakikalar içinde profesyonel CV oluşturun.', noIndex: false });
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

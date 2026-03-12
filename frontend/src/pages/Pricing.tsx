@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { usePayment } from '@/hooks/usePayment';
+import { useSEO } from '@/hooks/useSEO';
 import IyzicoCheckoutModal from '@/components/payment/IyzicoCheckoutModal';
 
 type PlanType = 'one_time' | 'monthly';
@@ -61,6 +62,11 @@ const PLANS = [
 ];
 
 export default function Pricing() {
+  useSEO({
+    title: 'Fiyatlandırma',
+    description: 'CV Builder Premium ile sınırsız PDF, sınırsız AI önerisi. Tek seferlik 99₺ veya 49₺/ay.',
+    canonical: 'https://cvbuilder.app/pricing',
+  });
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const { initiatePayment, isLoading, error } = usePayment();

@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { usePayment } from '@/hooks/usePayment';
 import { useAuthStore } from '@/stores/authStore';
+import { useSEO } from '@/hooks/useSEO';
 
 type ResultState = 'loading' | 'success' | 'failed' | 'error';
 
 export default function PaymentResult() {
+  useSEO({ title: 'Ödeme Sonucu', noIndex: true });
   const [searchParams] = useSearchParams();
   const token  = searchParams.get('token');
   const status = searchParams.get('status'); // İyzico bazı durumlarda ekler

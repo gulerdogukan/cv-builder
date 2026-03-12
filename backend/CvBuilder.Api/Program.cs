@@ -140,12 +140,31 @@ app.MapPdfEndpoints();
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "OK", timestamp = DateTime.UtcNow }));
 
-// Auto-migrate in development
+// DB initialization
+// EF Core migration dosyaları yokken MigrateAsync() crash açar.
+// EnsureCreated() — migration dosyası gerektirmez, tabloları yoksa oluşturur.
+// Production'da (Railway) Supabase kendi DB'sine sahip olduğundan bu blok çalışmaz.
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
+
+    // Tabloları oluştur (EF Core migration dosyası olmadan da çalışır)
+    await db.Database.EnsureCreatedAsync();
+
+    // AI rate limit kolonlarını ekle (ALTER TABLE IF NOT EXISTS — idempotent)
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE "Users"
+          ADD COLUMN IF NOT EXISTS "AiRequestsToday" integer NOT NULL DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS "AiRequestsResetAt" timestamp with time zone NOT NULL DEFAULT now();
+        """);
+
+    // Payment.IyzicoToken index (callback lookup için)
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS "IX_Payments_IyzicoToken"
+          ON "Payments" ("IyzicoToken")
+          WHERE "IyzicoToken" IS NOT NULL;
+        """);
 }
 
 app.Run();

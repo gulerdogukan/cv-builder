@@ -66,6 +66,11 @@ public class AppDbContext : DbContext
             entity.Property(p => p.PlanType)
                 .HasConversion<string>()
                 .HasMaxLength(20);
+
+            // İyzico callback lookup için partial index — callback O(1) olsun
+            entity.HasIndex(p => p.IyzicoToken)
+                .HasFilter("\"IyzicoToken\" IS NOT NULL")
+                .HasDatabaseName("IX_Payments_IyzicoToken");
         });
     }
 }

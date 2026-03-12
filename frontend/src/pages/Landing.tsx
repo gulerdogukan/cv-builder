@@ -184,6 +184,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 // ── Sayfa ─────────────────────────────────────────────────────────────────────
 
 export default function Landing() {
+  useSEO({ canonical: 'https://cvbuilder.app/' });
   const [activeTemplate, setActiveTemplate] = useState('modern');
 
   return (

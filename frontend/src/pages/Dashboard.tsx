@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCV } from '@/hooks/useCV';
+import { useSEO } from '@/hooks/useSEO';
 import { useAuthStore } from '@/stores/authStore';
 import Navbar from '@/components/layout/Navbar';
 
 export default function Dashboard() {
+  useSEO({ title: 'Dashboard', description: 'CV listeniği yönetin, yeni CV oluşturun.', noIndex: true });
   const { cvList, fetchCVList, createCV, deleteCV, isLoading: cvLoading } = useCV();
   const { user } = useAuthStore();
   const navigate = useNavigate();

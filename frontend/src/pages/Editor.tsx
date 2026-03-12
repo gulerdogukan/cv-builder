@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useCV } from '@/hooks/useCV';
 import { useAuthStore } from '@/stores/authStore';
 import { usePdf } from '@/hooks/usePdf';
+import { useSEO } from '@/hooks/useSEO';
 import type { TemplateType } from '@/types/cv.types';
 import CVEditor from '@/components/editor/CVEditor';
 import CVPreview from '@/components/preview/CVPreview';
@@ -10,6 +11,7 @@ import CVPreview from '@/components/preview/CVPreview';
 type ViewMode = 'editor' | 'preview' | 'split';
 
 export default function Editor() {
+  useSEO({ title: 'CV Düzenle', noIndex: true });
   const { id } = useParams<{ id: string }>();
   const { currentCV, fetchCV, updateSection, isLoading } = useCV();
   const { user } = useAuthStore();

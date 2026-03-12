@@ -1,4 +1,5 @@
 using CvBuilder.Api.Data;
+using CvBuilder.Api.Middleware;
 using CvBuilder.Api.Models;
 using CvBuilder.Api.Services;
 using Microsoft.EntityFrameworkCore;
@@ -21,11 +22,11 @@ public static class PdfEndpoints
             IPdfService pdfService,
             HttpContext ctx) =>
         {
-            var userId = ctx.Items["UserId"] as string;
-            if (string.IsNullOrEmpty(userId)) return Results.Unauthorized();
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
 
             // Kullanıcı planı kontrol et
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId.Value);
             if (user == null) return Results.Unauthorized();
 
             if (user.Plan != PlanType.Paid)
@@ -38,7 +39,7 @@ public static class PdfEndpoints
             // CV + sections getir
             var cv = await db.CVs
                 .Include(c => c.Sections)
-                .FirstOrDefaultAsync(c => c.Id == cvId && c.UserId.ToString() == userId);
+                .FirstOrDefaultAsync(c => c.Id == cvId && c.UserId == userId.Value);
 
             if (cv == null) return Results.NotFound();
 

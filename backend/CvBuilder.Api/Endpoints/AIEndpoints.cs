@@ -1,5 +1,6 @@
 using CvBuilder.Api.Data;
 using CvBuilder.Api.DTOs;
+using CvBuilder.Api.Middleware;
 using CvBuilder.Api.Models;
 using CvBuilder.Api.Services;
 using Microsoft.EntityFrameworkCore;
@@ -23,10 +24,10 @@ public static class AIEndpoints
             AppDbContext db,
             HttpContext ctx) =>
         {
-            var userId = ctx.Items["UserId"] as string;
-            if (string.IsNullOrEmpty(userId)) return Results.Unauthorized();
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
 
-            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId);
+            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
             if (!rateLimitResult.Allowed)
                 return Results.Json(
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
@@ -46,10 +47,10 @@ public static class AIEndpoints
             AppDbContext db,
             HttpContext ctx) =>
         {
-            var userId = ctx.Items["UserId"] as string;
-            if (string.IsNullOrEmpty(userId)) return Results.Unauthorized();
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
 
-            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId);
+            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
             if (!rateLimitResult.Allowed)
                 return Results.Json(
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
@@ -59,26 +60,27 @@ public static class AIEndpoints
             string cvDataJson = request.CvDataJson ?? "";
             if (string.IsNullOrEmpty(cvDataJson) && !string.IsNullOrEmpty(request.CvId))
             {
-                var cv = await db.CVs
-                    .Include(c => c.Sections)
-                    .FirstOrDefaultAsync(c => c.Id.ToString() == request.CvId &&
-                                              c.UserId.ToString() == userId);
-                if (cv != null)
+                if (Guid.TryParse(request.CvId, out var cvGuid))
                 {
-                    // Sections → CVData JSON oluştur
-                    var dataDict = cv.Sections.ToDictionary(
-                        s => s.SectionType.ToString().ToLower(),
-                        s => (object)(s.Content ?? "{}"));
-                    cvDataJson = System.Text.Json.JsonSerializer.Serialize(dataDict);
+                    var cv = await db.CVs
+                        .Include(c => c.Sections)
+                        .FirstOrDefaultAsync(c => c.Id == cvGuid && c.UserId == userId.Value);
+                    if (cv != null)
+                    {
+                        var dataDict = cv.Sections.ToDictionary(
+                            s => s.SectionType.ToString().ToLower(),
+                            s => (object)(s.Content ?? "{}"));
+                        cvDataJson = System.Text.Json.JsonSerializer.Serialize(dataDict);
+                    }
                 }
             }
 
             var (score, suggestions) = await aiService.CalculateATSScoreAsync(cvDataJson);
 
-            // ATS skorunu CV kaydına yaz (fire-and-forget)
-            if (!string.IsNullOrEmpty(request.CvId))
+            // ATS skorunu CV kaydına yaz
+            if (!string.IsNullOrEmpty(request.CvId) && Guid.TryParse(request.CvId, out var scoreGuid))
             {
-                var cv = await db.CVs.FindAsync(Guid.Parse(request.CvId));
+                var cv = await db.CVs.FirstOrDefaultAsync(c => c.Id == scoreGuid && c.UserId == userId.Value);
                 if (cv != null)
                 {
                     cv.AtsScore = score;
@@ -99,10 +101,10 @@ public static class AIEndpoints
             AppDbContext db,
             HttpContext ctx) =>
         {
-            var userId = ctx.Items["UserId"] as string;
-            if (string.IsNullOrEmpty(userId)) return Results.Unauthorized();
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
 
-            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId);
+            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
             if (!rateLimitResult.Allowed)
                 return Results.Json(
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
@@ -118,10 +120,10 @@ public static class AIEndpoints
         // GET /api/ai/rate-limit — mevcut limit durumunu sorgula
         group.MapGet("/rate-limit", async (AppDbContext db, HttpContext ctx) =>
         {
-            var userId = ctx.Items["UserId"] as string;
-            if (string.IsNullOrEmpty(userId)) return Results.Unauthorized();
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
 
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId.Value);
             if (user == null) return Results.NotFound();
 
             ResetIfNewDay(user);
@@ -143,9 +145,9 @@ public static class AIEndpoints
 
     private record RateLimitResult(bool Allowed, int Remaining, string ResetAt);
 
-    private static async Task<RateLimitResult> CheckAndIncrementRateLimit(AppDbContext db, string userId)
+    private static async Task<RateLimitResult> CheckAndIncrementRateLimit(AppDbContext db, Guid userId)
     {
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return new RateLimitResult(false, 0, "");
 
         // Ücretli kullanıcılara limit yok

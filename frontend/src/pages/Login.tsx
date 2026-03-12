@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { useSEO } from '@/hooks/useSEO';
 
 function GoogleIcon() {
   return (
@@ -26,6 +27,7 @@ function GoogleIcon() {
 }
 
 export default function Login() {
+  useSEO({ title: 'Giriş Yap', description: 'CV Builder hesabınıza giriş yapın.', noIndex: true });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

@@ -1,7 +1,13 @@
 version: '3.8'
 
+# Geliştirme ortamı için docker-compose
+# Frontend: Vite dev server (hot reload)
+# Backend: .NET 8 API (Development mode, EnsureCreated ile DB init)
+# PDF Service: Node.js + Puppeteer
+# DB: PostgreSQL 16
+
 services:
-  # PostgreSQL Database
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: cvbuilder-db
@@ -19,7 +25,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # .NET 8 Backend API
+  # ── .NET 8 Backend API ──────────────────────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -30,26 +36,32 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5000
+      - PORT=5000
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=cvbuilder;Username=postgres;Password=postgres
+      - PdfService__BaseUrl=http://pdf-service:3001
+      - App__FrontendUrl=http://localhost:5173
+      - App__CorsOrigins__0=http://localhost:5173
     depends_on:
       postgres:
         condition: service_healthy
 
-  # React Frontend
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+  # ── React Frontend (Vite dev server — hot reload için) ─────────────────────
+  # NOT: Prod build için docker-compose.prod.yml kullanın (nginx)
+  frontend-dev:
+    image: node:20-alpine
     container_name: cvbuilder-frontend
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host"
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend/src:/app/src
+      - ./frontend:/app
+      - /app/node_modules
     environment:
       - VITE_API_BASE_URL=http://localhost:5000
       - VITE_PDF_SERVICE_URL=http://localhost:3001
 
-  # PDF Generation Microservice
+  # ── PDF Generation Microservice ─────────────────────────────────────────────
   pdf-service:
     build:
       context: ./pdf-service
@@ -59,6 +71,7 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
+      - NODE_ENV=development
 
 volumes:
   pgdata:

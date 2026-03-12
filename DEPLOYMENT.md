@@ -27,8 +27,8 @@ Stack: **Vercel** (frontend) + **Railway** (backend + pdf-service + PostgreSQL)
 
 ```bash
 # In Supabase SQL Editor or via psql:
-psql $DATABASE_URL -f backend/CvBuilder.Api/Data/Migrations/001_InitialCreate.sql
-psql $DATABASE_URL -f backend/CvBuilder.Api/Data/Migrations/AddAIRateLimitToUsers.sql
+psql $DATABASE_URL -f backend/CvBuilder.Api/Data/Migrations/001_InitialSchema.sql
+# AddAIRateLimitToUsers.sql — 001_InitialSchema.sql icinde dahil edilmistir
 ```
 
 ---
