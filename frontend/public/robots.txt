@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /editor/
+Disallow: /payment/
+
+Sitemap: https://cvbuilder.app/sitemap.xml

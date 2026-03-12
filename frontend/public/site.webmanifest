@@ -1,0 +1,33 @@
+{
+  "name": "CV Builder — AI Destekli Özgeçmiş Oluşturucu",
+  "short_name": "CV Builder",
+  "description": "Yapay zeka destekli, ATS uyumlu profesyonel CV oluşturucu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "business", "utilities"],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "label": "CV Builder Ana Sayfa"
+    }
+  ]
+}
