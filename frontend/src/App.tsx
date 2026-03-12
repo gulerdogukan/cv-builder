@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Editor from './pages/Editor';
 import Pricing from './pages/Pricing';
+import PaymentResult from './pages/PaymentResult';
 
 function App() {
   const initialize = useAuthStore((s) => s.initialize);
@@ -24,6 +25,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/payment/result" element={<PaymentResult />} />
 
       {/* Korumalı sayfalar */}
       <Route

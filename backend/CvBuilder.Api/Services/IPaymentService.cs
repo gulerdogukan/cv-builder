@@ -1,8 +1,15 @@
+using CvBuilder.Api.DTOs;
+
 namespace CvBuilder.Api.Services;
 
 public interface IPaymentService
 {
-    Task<string> InitiatePaymentAsync(Guid userId, string planType);
-    Task<bool> ProcessCallbackAsync(string token);
-    Task<string> GetPaymentStatusAsync(Guid userId);
+    Task<InitiatePaymentResponse> InitiateCheckoutAsync(
+        Guid userId,
+        InitiatePaymentRequest request,
+        string callbackUrl);
+
+    Task<(bool Success, string Message)> ProcessCallbackAsync(string token);
+
+    Task<PaymentStatusResponse> GetPaymentStatusAsync(Guid userId);
 }

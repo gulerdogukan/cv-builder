@@ -1,3 +1,4 @@
+using CvBuilder.Api.DTOs;
 using CvBuilder.Api.Middleware;
 using CvBuilder.Api.Services;
 
@@ -9,33 +10,75 @@ public static class PaymentEndpoints
     {
         var group = app.MapGroup("/api/payment").WithTags("Payment");
 
-        group.MapPost("/initiate", async (HttpContext context, IPaymentService paymentService) =>
+        // POST /api/payment/initiate — Checkout Form başlat
+        group.MapPost("/initiate", async (
+            InitiatePaymentRequest request,
+            HttpContext ctx,
+            IPaymentService paymentService,
+            IConfiguration config) =>
         {
-            var userId = context.GetUserId();
+            var userId = ctx.GetUserId();
             if (userId is null) return Results.Unauthorized();
 
-            var token = await paymentService.InitiatePaymentAsync(userId.Value, "one_time");
-            return Results.Ok(new { token });
+            // Callback URL — frontend /payment/result sayfasına yönlendir
+            var frontendUrl = config["App:FrontendUrl"] ?? "http://localhost:5173";
+            var callbackUrl = $"{frontendUrl}/payment/result";
+
+            try
+            {
+                var result = await paymentService.InitiateCheckoutAsync(userId.Value, request, callbackUrl);
+                return Results.Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Json(new { error = ex.Message }, statusCode: 400);
+            }
         })
         .RequireAuthorization();
 
-        group.MapPost("/callback", async (HttpContext context, IPaymentService paymentService) =>
+        // POST /api/payment/callback — İyzico webhook (auth gerekmez)
+        group.MapPost("/callback", async (
+            HttpContext ctx,
+            IPaymentService paymentService) =>
         {
-            // İyzico webhook — auth gerektirmez
-            var form = await context.Request.ReadFormAsync();
-            var token = form["token"].ToString();
-            var success = await paymentService.ProcessCallbackAsync(token);
-            return success ? Results.Ok() : Results.BadRequest();
+            // İyzico form-encoded POST gönderir
+            var form   = await ctx.Request.ReadFormAsync();
+            var token  = form["token"].ToString();
+            var status = form["status"].ToString();
+
+            if (string.IsNullOrEmpty(token))
+                return Results.BadRequest(new { error = "Token eksik" });
+
+            var (success, message) = await paymentService.ProcessCallbackAsync(token);
+
+            // İyzico callback'e HTTP 200 dönmek yeterli
+            return Results.Ok(new { success, message });
         });
 
-        group.MapGet("/status", async (HttpContext context, IPaymentService paymentService) =>
+        // GET /api/payment/status — Kullanıcı plan durumu
+        group.MapGet("/status", async (
+            HttpContext ctx,
+            IPaymentService paymentService) =>
         {
-            var userId = context.GetUserId();
+            var userId = ctx.GetUserId();
             if (userId is null) return Results.Unauthorized();
 
             var status = await paymentService.GetPaymentStatusAsync(userId.Value);
-            return Results.Ok(new { status });
+            return Results.Ok(status);
         })
         .RequireAuthorization();
+
+        // GET /api/payment/verify/{token} — Frontend callback sonrası doğrulama
+        // /payment/result sayfası bu endpoint'i çağırarak sonucu öğrenir
+        group.MapGet("/verify/{token}", async (
+            string token,
+            IPaymentService paymentService) =>
+        {
+            if (string.IsNullOrEmpty(token))
+                return Results.BadRequest(new { error = "Token eksik" });
+
+            var (success, message) = await paymentService.ProcessCallbackAsync(token);
+            return Results.Ok(new { success, message });
+        });
     }
 }
