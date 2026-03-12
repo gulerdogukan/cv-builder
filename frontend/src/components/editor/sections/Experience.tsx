@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Experience as ExperienceType } from '@/types/cv.types';
 import { generateId } from '@/lib/utils';
+import AIAssistButton from '@/components/editor/AIAssistButton';
 
 interface Props {
   data: ExperienceType[];
@@ -137,7 +138,17 @@ function ExperienceItem({ item, index, total, onUpdate, onRemove, onMove }: Item
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Açıklama</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-muted-foreground">Açıklama</label>
+              {item.description && item.description.trim().length > 10 && (
+                <AIAssistButton
+                  text={item.description}
+                  onAccept={(v) => update('description', v)}
+                  label="AI ile Güçlendir"
+                  compact
+                />
+              )}
+            </div>
             <textarea
               value={item.description}
               onChange={(e) => update('description', e.target.value)}

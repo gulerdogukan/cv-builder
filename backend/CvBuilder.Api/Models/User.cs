@@ -26,6 +26,10 @@ public class User
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // AI Rate Limiting
+    public int AiRequestsToday { get; set; } = 0;
+    public DateTime AiRequestsResetAt { get; set; } = DateTime.UtcNow.Date;
+
     // Navigation
     public ICollection<CV> CVs { get; set; } = new List<CV>();
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();

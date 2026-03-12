@@ -14,6 +14,7 @@ interface CVStore {
   setTemplate: (template: TemplateType) => void;
   setIsSaving: (isSaving: boolean) => void;
   setLastSaved: (date: Date) => void;
+  setAtsScore: (score: number) => void;
 }
 
 export const useCVStore = create<CVStore>((set) => ({
@@ -55,4 +56,10 @@ export const useCVStore = create<CVStore>((set) => ({
   setIsSaving: (isSaving) => set({ isSaving }),
 
   setLastSaved: (date) => set({ lastSaved: date }),
+
+  setAtsScore: (score) =>
+    set((state) => {
+      if (!state.currentCV) return state;
+      return { currentCV: { ...state.currentCV, atsScore: score } };
+    }),
 }));

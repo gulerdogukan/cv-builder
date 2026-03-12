@@ -34,10 +34,26 @@ public record UpdateCVRequest(
 );
 
 public record EnhanceTextRequest(string Text);
-public record EnhanceTextResponse(string EnhancedText);
+public class EnhanceTextResponse
+{
+    public string EnhancedText { get; init; }
+    public int? RemainingRequests { get; set; }
+    public EnhanceTextResponse(string enhancedText) { EnhancedText = enhancedText; }
+}
 
-public record ATSScoreRequest(string CvId);
-public record ATSScoreResponse(int Score, List<string> Suggestions);
+public record ATSScoreRequest(string? CvId, string? CvDataJson = null);
+public class ATSScoreResponse
+{
+    public int Score { get; init; }
+    public List<string> Suggestions { get; init; }
+    public int? RemainingRequests { get; set; }
+    public ATSScoreResponse(int score, List<string> suggestions) { Score = score; Suggestions = suggestions; }
+}
 
 public record SuggestSkillsRequest(string Position);
-public record SuggestSkillsResponse(List<string> Skills);
+public class SuggestSkillsResponse
+{
+    public List<string> Skills { get; init; }
+    public int? RemainingRequests { get; set; }
+    public SuggestSkillsResponse(List<string> skills) { Skills = skills; }
+}

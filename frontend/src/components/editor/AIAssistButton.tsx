@@ -5,10 +5,12 @@ interface Props {
   text: string;
   onAccept: (text: string) => void;
   label?: string;
+  /** Compact mode: sadece ikon göster, metin gizle */
+  compact?: boolean;
 }
 
-export default function AIAssistButton({ text, onAccept, label = 'AI ile Güçlendir' }: Props) {
-  const { enhanceText, isLoading } = useAI();
+export default function AIAssistButton({ text, onAccept, label = 'AI ile Güçlendir', compact = false }: Props) {
+  const { enhanceText, isLoading, error, isRateLimited } = useAI();
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -19,7 +21,7 @@ export default function AIAssistButton({ text, onAccept, label = 'AI ile Güçle
       setSuggestion(enhanced);
       setIsOpen(true);
     } catch {
-      // error handled in hook
+      // error handled in hook — isRateLimited will be set
     }
   };
 
@@ -38,26 +40,41 @@ export default function AIAssistButton({ text, onAccept, label = 'AI ile Güçle
 
   return (
     <>
-      <button
-        type="button"
-        onClick={handleEnhance}
-        disabled={isLoading || !text.trim()}
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        {isLoading ? (
-          <>
-            <span className="animate-spin rounded-full h-3 w-3 border-b border-primary" />
-            Güçlendiriliyor...
-          </>
-        ) : (
-          <>
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            {label}
-          </>
+      <div className="flex flex-col items-end gap-1">
+        <button
+          type="button"
+          onClick={handleEnhance}
+          disabled={isLoading || !text.trim() || isRateLimited}
+          title={isRateLimited ? 'Günlük AI limitine ulaştınız' : label}
+          className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
+            isRateLimited
+              ? 'text-muted-foreground cursor-not-allowed opacity-50'
+              : 'text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed'
+          }`}
+        >
+          {isLoading ? (
+            <>
+              <span className="animate-spin rounded-full h-3 w-3 border-b border-primary" />
+              {!compact && 'Güçlendiriliyor...'}
+            </>
+          ) : (
+            <>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              {!compact && label}
+            </>
+          )}
+        </button>
+
+        {/* Rate limit / error mesajı */}
+        {isRateLimited && (
+          <p className="text-[10px] text-destructive">Günlük limit doldu</p>
         )}
-      </button>
+        {error && !isRateLimited && (
+          <p className="text-[10px] text-destructive">{error}</p>
+        )}
+      </div>
 
       {/* Öneri Modal */}
       {isOpen && suggestion && (
