@@ -15,7 +15,7 @@ function GoogleIcon() {
 }
 
 export default function Register() {
-  useSEO({ title: 'Ücretsiz Kayıt Ol', description: 'CV Builder'a ücretsiz kaydolun, dakikalar içinde profesyonel CV oluşturun.', noIndex: false });
+  useSEO({ title: 'Ücretsiz Kayıt Ol', description: "CV Builder'a ücretsiz kaydolun, dakikalar içinde profesyonel CV oluşturun.", noIndex: false });
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
