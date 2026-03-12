@@ -3,39 +3,60 @@ using System.Text.Json;
 
 namespace CvBuilder.Api.Services;
 
-/// <summary>
-/// PDF Service client — Node.js Puppeteer servisine istek atar.
-/// </summary>
 public class PdfService : IPdfService
 {
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _pdfServiceUrl;
+    private readonly ILogger<PdfService> _logger;
 
-    public PdfService(IConfiguration configuration)
+    public PdfService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<PdfService> logger)
     {
-        _httpClient = new HttpClient();
+        _httpClientFactory = httpClientFactory;
         _pdfServiceUrl = configuration["PdfService:BaseUrl"] ?? "http://localhost:3001";
+        _logger = logger;
     }
 
-    public async Task<string> GeneratePdfAsync(Guid cvId, string template, string cvDataJson)
+    public async Task<byte[]> GeneratePdfAsync(string template, string cvDataJson)
     {
-        var requestBody = new
+        var client = _httpClientFactory.CreateClient("PdfService");
+
+        object? cvData;
+        try { cvData = JsonSerializer.Deserialize<object>(cvDataJson); }
+        catch { cvData = new { }; }
+
+        var requestBody = JsonSerializer.Serialize(new
         {
-            cvId = cvId.ToString(),
-            template,
-            data = JsonSerializer.Deserialize<object>(cvDataJson),
-        };
+            template = template.ToLower(),
+            data = cvData,
+        });
 
-        var content = new StringContent(
-            JsonSerializer.Serialize(requestBody),
-            Encoding.UTF8,
-            "application/json"
-        );
+        var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync($"{_pdfServiceUrl}/generate", content);
-        response.EnsureSuccessStatusCode();
+        HttpResponseMessage response;
+        try
+        {
+            response = await client.PostAsync($"{_pdfServiceUrl}/generate", content);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "PDF servisi ulasilamiyor: {Url}", _pdfServiceUrl);
+            throw new InvalidOperationException("PDF servisi su anda kullanilamiyor.");
+        }
 
-        var result = await response.Content.ReadAsStringAsync();
-        return result; // PDF URL veya base64
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            _logger.LogError("PDF servisi hata: {Status} — {Body}", response.StatusCode, errorBody);
+            throw new InvalidOperationException("PDF olusturulamadi.");
+        }
+
+        var resultJson = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(resultJson);
+
+        if (!doc.RootElement.TryGetProperty("pdf", out var pdfProp))
+            throw new InvalidOperationException("PDF servisi beklenmedik yanit dondurudu.");
+
+        var base64 = pdfProp.GetString() ?? throw new InvalidOperationException("PDF verisi bos.");
+        return Convert.FromBase64String(base64);
     }
 }

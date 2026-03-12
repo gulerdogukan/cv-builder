@@ -95,11 +95,19 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// HTTP client factory (PdfService icin)
+builder.Services.AddHttpClient("PdfService", client =>
+{
+    var pdfUrl = builder.Configuration["PdfService:BaseUrl"] ?? "http://localhost:3001";
+    client.BaseAddress = new Uri(pdfUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // Application Services
 builder.Services.AddScoped<ICVService, CVService>();
 builder.Services.AddScoped<IAIService, AIService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
-builder.Services.AddSingleton<IPdfService, PdfService>();
+builder.Services.AddScoped<IPdfService, PdfService>();
 
 // === App ===
 
@@ -127,6 +135,7 @@ app.MapAuthEndpoints();
 app.MapCVEndpoints();
 app.MapAIEndpoints();
 app.MapPaymentEndpoints();
+app.MapPdfEndpoints();
 
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "OK", timestamp = DateTime.UtcNow }));

@@ -5,64 +5,116 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Times New Roman', Times, serif;
-      font-size: 11pt;
-      line-height: 1.5;
-      color: #000;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      font-size: 10.5pt;
+      line-height: 1.6;
+      color: #111;
     }
     .page {
       width: 210mm;
       min-height: 297mm;
-      padding: 20mm;
+      padding: 20mm 22mm;
     }
-    .header { text-align: center; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 12px; }
-    .header h1 { font-size: 22pt; letter-spacing: 2px; text-transform: uppercase; }
-    .contact-info { text-align: center; font-size: 9pt; color: #444; margin-top: 4px; }
-    .contact-info span::after { content: ' | '; }
-    .contact-info span:last-child::after { content: ''; }
-    .summary { margin-bottom: 14px; font-style: italic; font-size: 10pt; color: #333; }
-    .section { margin-bottom: 14px; }
-    .section-title { font-size: 12pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #999; padding-bottom: 2px; margin-bottom: 8px; }
+    /* ─── Header ─── */
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #111;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .header h1 {
+      font-size: 22pt;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    .contact-row {
+      text-align: center;
+      font-size: 9pt;
+      color: #444;
+      margin-top: 5px;
+      font-family: 'Arial', sans-serif;
+    }
+    .contact-row span::after { content: '  |  '; }
+    .contact-row span:last-child::after { content: ''; }
+    /* ─── Summary ─── */
+    .summary {
+      font-style: italic;
+      font-size: 10pt;
+      color: #333;
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+    /* ─── Section ─── */
+    .section { margin-bottom: 13px; }
+    .section-title {
+      font-size: 11pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      border-bottom: 1px solid #888;
+      padding-bottom: 3px;
+      margin-bottom: 9px;
+    }
+    /* ─── Items ─── */
     .experience-item, .education-item { margin-bottom: 10px; }
-    .item-header { font-size: 11pt; }
-    .item-date { font-size: 9pt; color: #666; }
-    .item-subtitle { font-size: 10pt; }
-    .item-desc { font-size: 10pt; margin-top: 2px; }
+    .item-header { font-size: 10.5pt; }
+    .item-header strong { font-weight: bold; }
+    .separator { color: #666; }
     .location { font-size: 9pt; color: #666; }
+    .item-date { font-size: 9pt; color: #666; font-family: 'Arial', sans-serif; margin-top: 1px; }
+    .item-subtitle { font-size: 10pt; font-style: italic; margin-top: 1px; }
+    .item-desc { font-size: 10pt; margin-top: 4px; text-align: justify; }
+    .item-gpa { font-size: 9pt; color: #555; }
+    /* ─── Skills ─── */
     .skill-tag { font-size: 10pt; }
-    .skill-tag::after { content: ' · '; }
+    .skill-tag::after { content: '  ·  '; color: #bbb; }
     .skill-tag:last-child::after { content: ''; }
+    /* ─── Languages / Certs ─── */
     .lang-item { font-size: 10pt; }
-    .cert-item { font-size: 10pt; margin-bottom: 2px; }
+    .lang-level { color: #666; font-size: 9pt; }
+    .lang-item::after { content: '  ·  '; color: #bbb; }
+    .lang-item:last-child::after { content: ''; }
+    .cert-item { font-size: 10pt; margin-bottom: 3px; }
+    .cert-url { color: #444; font-size: 9pt; }
+    .empty-section { color: #aaa; font-size: 9pt; font-style: italic; }
   </style>
 </head>
 <body>
   <div class="page">
     <div class="header">
       <h1>{{fullName}}</h1>
-      <div class="contact-info">
+      <div class="contact-row">
         <span>{{email}}</span>
         <span>{{phone}}</span>
         <span>{{location}}</span>
+        <span>{{linkedin}}</span>
+        <span>{{github}}</span>
       </div>
     </div>
+
     <div class="summary">{{summary}}</div>
+
     <div class="section">
       <div class="section-title">Deneyim</div>
       {{experienceList}}
     </div>
+
     <div class="section">
       <div class="section-title">Eğitim</div>
       {{educationList}}
     </div>
+
     <div class="section">
       <div class="section-title">Beceriler</div>
-      {{skillsList}}
+      <div>{{skillsList}}</div>
     </div>
+
     <div class="section">
       <div class="section-title">Diller</div>
-      {{languagesList}}
+      <div>{{languagesList}}</div>
     </div>
+
     <div class="section">
       <div class="section-title">Sertifikalar</div>
       {{certificationsList}}

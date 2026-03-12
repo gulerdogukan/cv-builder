@@ -5,122 +5,133 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 11pt;
-      line-height: 1.5;
-      color: #1a1a1a;
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #1a1a2e;
     }
     .page {
       width: 210mm;
       min-height: 297mm;
-      padding: 20mm 18mm;
+      padding: 0;
     }
-    /* Header */
+    /* ─── Header ─── */
     .header {
-      border-bottom: 3px solid #2563eb;
-      padding-bottom: 12px;
-      margin-bottom: 16px;
+      background: #2563eb;
+      color: #fff;
+      padding: 22mm 18mm 14mm;
     }
     .header h1 {
-      font-size: 24pt;
-      color: #2563eb;
+      font-size: 26pt;
       font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
     }
-    .contact-info {
+    .contact-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 6px;
-      font-size: 9pt;
-      color: #555;
+      gap: 14px;
+      margin-top: 10px;
+      font-size: 8.5pt;
+      color: rgba(255,255,255,0.85);
     }
-    .contact-info span { display: flex; align-items: center; gap: 4px; }
-    /* Summary */
+    .contact-row span { display: flex; align-items: center; gap: 4px; }
+    /* ─── Body ─── */
+    .body { padding: 14mm 18mm 18mm; }
     .summary {
-      margin-bottom: 16px;
       font-size: 10pt;
       color: #444;
-      line-height: 1.6;
+      line-height: 1.65;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #e5e7eb;
     }
-    /* Sections */
-    .section { margin-bottom: 14px; }
+    /* ─── Section ─── */
+    .section { margin-bottom: 13px; }
     .section-title {
-      font-size: 12pt;
+      font-size: 10pt;
       font-weight: 700;
       color: #2563eb;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 4px;
-      margin-bottom: 10px;
+      letter-spacing: 1.2px;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 3px;
+      margin-bottom: 9px;
     }
-    /* Items */
-    .experience-item, .education-item { margin-bottom: 12px; }
-    .item-header { font-size: 11pt; }
-    .item-header strong { color: #1a1a1a; }
-    .item-date { font-size: 9pt; color: #888; margin-top: 2px; }
-    .item-subtitle { font-size: 10pt; color: #555; }
-    .item-desc { font-size: 10pt; margin-top: 4px; color: #333; }
-    .item-gpa { font-size: 9pt; color: #666; }
-    .location { font-size: 9pt; color: #888; margin-left: 8px; }
-    /* Skills */
-    .skills-container { display: flex; flex-wrap: wrap; gap: 6px; }
+    /* ─── Items ─── */
+    .experience-item, .education-item { margin-bottom: 11px; }
+    .item-header { font-size: 10.5pt; color: #111; }
+    .item-header strong { font-weight: 600; }
+    .separator { color: #6b7280; }
+    .location { font-size: 9pt; color: #9ca3af; }
+    .item-date { font-size: 8.5pt; color: #9ca3af; margin-top: 1px; }
+    .item-subtitle { font-size: 9.5pt; color: #6b7280; margin-top: 1px; }
+    .item-desc { font-size: 9.5pt; color: #374151; margin-top: 4px; line-height: 1.5; }
+    .item-gpa { font-size: 9pt; color: #6b7280; margin-top: 1px; }
+    /* ─── Skills ─── */
+    .skills-container { display: flex; flex-wrap: wrap; gap: 5px; }
     .skill-tag {
       background: #eff6ff;
-      color: #2563eb;
-      padding: 3px 10px;
+      color: #1d4ed8;
+      padding: 2px 10px;
       border-radius: 12px;
       font-size: 9pt;
       font-weight: 500;
+      border: 1px solid #bfdbfe;
     }
-    /* Languages */
-    .lang-item { font-size: 10pt; color: #444; }
-    /* Certs */
-    .cert-item { font-size: 10pt; margin-bottom: 4px; color: #444; }
-
-    @media print {
-      .page { padding: 15mm; }
-    }
+    .skill-tag[data-level="expert"]       { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+    .skill-tag[data-level="advanced"]     { background: #faf5ff; color: #6b21a8; border-color: #e9d5ff; }
+    .skill-tag[data-level="beginner"]     { background: #f9fafb; color: #6b7280; border-color: #e5e7eb; }
+    /* ─── Languages / Certs ─── */
+    .lang-row { display: flex; flex-wrap: wrap; gap: 14px; }
+    .lang-item { font-size: 10pt; color: #374151; }
+    .lang-level { color: #9ca3af; font-size: 9pt; }
+    .cert-item { font-size: 9.5pt; color: #374151; margin-bottom: 3px; }
+    .cert-url { color: #2563eb; font-size: 8.5pt; }
+    .empty-section { color: #9ca3af; font-size: 9pt; font-style: italic; }
   </style>
 </head>
 <body>
   <div class="page">
     <div class="header">
       <h1>{{fullName}}</h1>
-      <div class="contact-info">
+      <div class="contact-row">
         <span>{{email}}</span>
         <span>{{phone}}</span>
         <span>{{location}}</span>
         <span>{{linkedin}}</span>
         <span>{{github}}</span>
+        <span>{{website}}</span>
       </div>
     </div>
 
-    <div class="summary">{{summary}}</div>
+    <div class="body">
+      <div class="summary">{{summary}}</div>
 
-    <div class="section">
-      <div class="section-title">Deneyim</div>
-      {{experienceList}}
-    </div>
+      <div class="section">
+        <div class="section-title">Deneyim</div>
+        {{experienceList}}
+      </div>
 
-    <div class="section">
-      <div class="section-title">Eğitim</div>
-      {{educationList}}
-    </div>
+      <div class="section">
+        <div class="section-title">Eğitim</div>
+        {{educationList}}
+      </div>
 
-    <div class="section">
-      <div class="section-title">Beceriler</div>
-      <div class="skills-container">{{skillsList}}</div>
-    </div>
+      <div class="section">
+        <div class="section-title">Beceriler</div>
+        <div class="skills-container">{{skillsList}}</div>
+      </div>
 
-    <div class="section">
-      <div class="section-title">Diller</div>
-      <div>{{languagesList}}</div>
-    </div>
+      <div class="section">
+        <div class="section-title">Diller</div>
+        <div class="lang-row">{{languagesList}}</div>
+      </div>
 
-    <div class="section">
-      <div class="section-title">Sertifikalar</div>
-      {{certificationsList}}
+      <div class="section">
+        <div class="section-title">Sertifikalar</div>
+        {{certificationsList}}
+      </div>
     </div>
   </div>
 </body>
