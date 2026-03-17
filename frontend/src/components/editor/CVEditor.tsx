@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CVData, SectionType, TemplateType } from '@/types/cv.types';
 import { useCV } from '@/hooks/useCV';
 import { useAI } from '@/hooks/useAI';
+import { useAuthStore } from '@/stores/authStore';
 import { debounce } from '@/lib/utils';
 import PersonalInfo from './sections/PersonalInfo';
 import Summary from './sections/Summary';
@@ -10,8 +11,28 @@ import Education from './sections/Education';
 import Skills from './sections/Skills';
 import Languages from './sections/Languages';
 import Certifications from './sections/Certifications';
-import AIAssistButton from './AIAssistButton';
 import { TEMPLATE_INFO } from '@/components/preview/CVPreview';
+import { motion, AnimatePresence } from 'framer-motion';
+import AtsSimulatorModal from './AtsSimulatorModal';
+import { Palette, Type, Check } from 'lucide-react';
+
+const COLORS = [
+  { name: 'Mavi', value: '#3b82f6' },
+  { name: 'Lacivert', value: '#1e3a8a' },
+  { name: 'Zümrüt', value: '#10b981' },
+  { name: 'Gül', value: '#e11d48' },
+  { name: 'Turuncu', value: '#f59e0b' },
+  { name: 'Mor', value: '#8b5cf6' },
+  { name: 'Kömür', value: '#374151' },
+];
+
+const FONTS = [
+  { name: 'Inter (Modern)', value: 'Inter, system-ui, sans-serif' },
+  { name: 'Roboto (Temiz)', value: 'Roboto, sans-serif' },
+  { name: 'Merriweather (Klasik)', value: 'Merriweather, serif' },
+  { name: 'Outfit (Şık)', value: 'Outfit, sans-serif' },
+  { name: 'Playfair (Zarif)', value: 'Playfair Display, serif' },
+];
 
 type TabKey = SectionType;
 
@@ -30,11 +51,12 @@ interface Props {
 }
 
 export default function CVEditor({ onTemplateChange }: Props) {
-  const { currentCV, updateSection, setTemplate, saveCV, setAtsScore, isSaving, lastSaved } = useCV();
+  const { currentCV, updateSection, setTemplate, setAccentColor, setFontFamily, saveCV, isSaving, lastSaved } = useCV();
   const { getATSScore, isLoading: isAILoading, isRateLimited, remainingRequests } = useAI();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabKey>('personal');
-  const [atsSuggestions, setAtsSuggestions] = useState<string[]>([]);
-  const [showAtsSuggestions, setShowAtsSuggestions] = useState(false);
+  const [showAtsModal, setShowAtsModal] = useState(false);
+  const [atsResult, setAtsResult] = useState<any>(null);
   const saveRef = useRef(saveCV);
   saveRef.current = saveCV;
 
@@ -63,15 +85,13 @@ export default function CVEditor({ onTemplateChange }: Props) {
 
   const handleATSScore = async () => {
     if (!currentCV) return;
+    setShowAtsModal(true);
     try {
-      // CV datasını JSON olarak gönder
       const cvDataJson = JSON.stringify(currentCV.data);
       const result = await getATSScore(currentCV.id, cvDataJson);
-      setAtsScore(result.score);
-      setAtsSuggestions(result.suggestions);
-      setShowAtsSuggestions(true);
+      setAtsResult(result);
     } catch {
-      // error handled in hook
+      setAtsResult(null);
     }
   };
 
@@ -97,19 +117,74 @@ export default function CVEditor({ onTemplateChange }: Props) {
 
         {/* Template seçici */}
         <div className="flex items-center gap-1">
-          {(Object.keys(TEMPLATE_INFO) as TemplateType[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => handleTemplateChange(t)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                currentCV.template === t
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
+          {(Object.keys(TEMPLATE_INFO) as TemplateType[]).map((t) => {
+            const isLocked = TEMPLATE_INFO[t].isPremium && user?.plan !== 'paid';
+            return (
+              <button
+                key={t}
+                onClick={() => {
+                  if (isLocked) {
+                    alert('Bu Premium bir şablondur. Yetkili erişim için planınızı yükseltin.');
+                  } else {
+                    handleTemplateChange(t);
+                  }
+                }}
+                className={`relative px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 ${
+                  currentCV.template === t
+                    ? 'bg-primary text-primary-foreground'
+                    : isLocked 
+                      ? 'text-muted-foreground/60 hover:bg-muted/50 cursor-not-allowed'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                {TEMPLATE_INFO[t].label}
+                {TEMPLATE_INFO[t].isPremium && (
+                  <span className="text-[10px]" title="Premium Şablon">👑</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Görsel Özelleştirme (Renk & Font) */}
+      <div className="px-4 py-2 border-b bg-card/10 flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 font-bold text-[10px] text-muted-foreground">
+              <Palette className="w-3 h-3" />
+              <span>RENK:</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => setAccentColor(c.value)}
+                  className="w-3.5 h-3.5 rounded-full border border-white shadow-sm ring-1 ring-border transition-transform hover:scale-110 flex items-center justify-center"
+                  style={{ backgroundColor: c.value }}
+                >
+                  {(currentCV.accentColor === c.value || (!currentCV.accentColor && c.value === '#3b82f6')) && (
+                    <Check className="w-2 h-2 text-white" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 font-bold text-[10px] text-muted-foreground">
+              <Type className="w-3 h-3" />
+              <span>FONT:</span>
+            </div>
+            <select
+              value={currentCV?.fontFamily || FONTS[0].value}
+              onChange={(e) => setFontFamily(e.target.value)}
+              className="bg-transparent text-[10px] font-bold text-foreground focus:outline-none cursor-pointer border-b border-dashed border-muted-foreground/30 pb-0.5"
             >
-              {TEMPLATE_INFO[t].label}
-            </button>
-          ))}
+              {FONTS.map((f) => (
+                <option key={f.value} value={f.value}>{f.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -132,14 +207,28 @@ export default function CVEditor({ onTemplateChange }: Props) {
             ATS Skoru Hesapla
           </button>
 
-          {currentCV.atsScore > 0 && (
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              currentCV.atsScore >= 80 ? 'bg-green-100 text-green-700' :
-              currentCV.atsScore >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-            }`}>
-              {currentCV.atsScore}/100
-            </span>
-          )}
+          <AnimatePresence>
+            {(currentCV.atsScore ?? 0) > 0 && (
+              <motion.span 
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  currentCV.atsScore >= 80 ? 'bg-green-100 text-green-700' :
+                  currentCV.atsScore >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                }`}
+              >
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  key={currentCV?.atsScore || 0}
+                >
+                  {currentCV?.atsScore || 0}
+                </motion.span>
+                /100
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Rate limit göstergesi (sadece ücretsiz kullanıcılar) */}
@@ -149,28 +238,6 @@ export default function CVEditor({ onTemplateChange }: Props) {
           </span>
         )}
       </div>
-
-      {/* ATS öneriler paneli */}
-      {showAtsSuggestions && atsSuggestions.length > 0 && (
-        <div className="px-4 py-3 border-b bg-amber-50 space-y-1.5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-amber-800">ATS İyileştirme Önerileri</p>
-            <button
-              type="button"
-              onClick={() => setShowAtsSuggestions(false)}
-              className="text-amber-600 hover:text-amber-800 text-xs"
-            >✕</button>
-          </div>
-          <ul className="space-y-1">
-            {atsSuggestions.map((s, i) => (
-              <li key={i} className="flex items-start gap-1.5 text-xs text-amber-700">
-                <span className="mt-0.5 shrink-0">•</span>
-                {s}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {/* Tab navigasyonu */}
       <div className="border-b overflow-x-auto">
@@ -192,66 +259,83 @@ export default function CVEditor({ onTemplateChange }: Props) {
         </div>
       </div>
 
-      {/* Section içeriği */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {activeTab === 'personal' && (
-          <PersonalInfo
-            data={data.personal}
-            onChange={(v) => handleSectionChange('personal', v)}
-          />
-        )}
-
-        {activeTab === 'summary' && (
-          <div className="space-y-3">
-            <Summary
-              data={data.summary}
-              onChange={(v) => handleSectionChange('summary', v)}
-            />
-            <div className="flex justify-end">
-              <AIAssistButton
-                text={data.summary}
-                onAccept={(v) => handleSectionChange('summary', v)}
-                label="AI ile Özeti Güçlendir"
+      <div className="flex-1 overflow-y-auto p-4 relative overflow-x-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="w-full h-full"
+          >
+            {activeTab === 'personal' && (
+              <PersonalInfo
+                data={data.personal}
+                onChange={(v: any) => handleSectionChange('personal', v)}
               />
-            </div>
-          </div>
-        )}
+            )}
 
-        {activeTab === 'experience' && (
-          <Experience
-            data={data.experience}
-            onChange={(v) => handleSectionChange('experience', v)}
-          />
-        )}
+            {activeTab === 'summary' && (
+              <div className="space-y-3">
+                <Summary
+                  cvDataJson={JSON.stringify(currentCV.data)}
+                  data={data.summary}
+                  onChange={(v: any) => handleSectionChange('summary', v)}
+                />
+              </div>
+            )}
 
-        {activeTab === 'education' && (
-          <Education
-            data={data.education}
-            onChange={(v) => handleSectionChange('education', v)}
-          />
-        )}
+            {activeTab === 'experience' && (
+              <Experience
+                data={data.experience}
+                template={currentCV.template}
+                onChange={(v: any) => handleSectionChange('experience', v)}
+              />
+            )}
 
-        {activeTab === 'skills' && (
-          <Skills
-            data={data.skills}
-            onChange={(v) => handleSectionChange('skills', v)}
-          />
-        )}
+            {activeTab === 'education' && (
+              <Education
+                data={data.education}
+                template={currentCV.template}
+                onChange={(v: any) => handleSectionChange('education', v)}
+              />
+            )}
 
-        {activeTab === 'languages' && (
-          <Languages
-            data={data.languages}
-            onChange={(v) => handleSectionChange('languages', v)}
-          />
-        )}
+            {activeTab === 'skills' && (
+              <Skills
+                data={data.skills}
+                template={currentCV.template}
+                profession={data.personal.profession}
+                onChange={(v: any) => handleSectionChange('skills', v)}
+              />
+            )}
 
-        {activeTab === 'certifications' && (
-          <Certifications
-            data={data.certifications}
-            onChange={(v) => handleSectionChange('certifications', v)}
-          />
-        )}
+            {activeTab === 'languages' && (
+              <Languages
+                data={data.languages}
+                template={currentCV.template}
+                onChange={(v: any) => handleSectionChange('languages', v)}
+              />
+            )}
+
+            {activeTab === 'certifications' && (
+              <Certifications
+                data={data.certifications}
+                template={currentCV.template}
+                onChange={(v: any) => handleSectionChange('certifications', v)}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
+
+      <AtsSimulatorModal
+        isOpen={showAtsModal}
+        onClose={() => setShowAtsModal(false)}
+        result={atsResult}
+        isLoading={isAILoading}
+      />
     </div>
   );
 }

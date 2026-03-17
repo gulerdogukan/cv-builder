@@ -1,5 +1,6 @@
 export interface PersonalInfo {
   fullName: string;
+  profession?: string;
   email: string;
   phone: string;
   location: string;
@@ -65,8 +66,15 @@ export interface CVData {
   certifications: Certification[];
 }
 
-export type TemplateType = 'modern' | 'classic' | 'minimal';
-
+export type TemplateType = 
+  | 'minimalist'
+  | 'modernist'
+  | 'executive'
+  | 'tech-focus'
+  | 'creative-canvas'
+  | 'startup'
+  | 'infographic'
+  | 'dark-mode';
 export type CVLanguage = 'tr' | 'en';
 
 export interface CV {
@@ -77,6 +85,8 @@ export interface CV {
   language: CVLanguage;
   isPublic: boolean;
   atsScore: number;
+  accentColor?: string | null;
+  fontFamily?: string | null;
   data: CVData;
   createdAt: string;
   updatedAt: string;

@@ -48,8 +48,17 @@ public static class CVEndpoints
             var userId = context.GetUserId();
             if (userId is null) return Results.Unauthorized();
 
-            var cv = await cvService.UpdateCVAsync(id, userId.Value, request);
-            return cv is null ? Results.NotFound() : Results.Ok(cv);
+            try
+            {
+                var cv = await cvService.UpdateCVAsync(id, userId.Value, request);
+                return cv is null ? Results.NotFound() : Results.Ok(cv);
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "CONCURRENCY_CONFLICT")
+            {
+                return Results.Json(
+                    new { error = "CV başka bir sekmede güncellendi. Sayfayı yenileyip tekrar deneyin.", code = "CONCURRENCY_CONFLICT" },
+                    statusCode: 409);
+            }
         });
 
         // DELETE /api/cvs/{id} — CV sil

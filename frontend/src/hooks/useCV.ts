@@ -4,88 +4,138 @@ import api from '@/lib/api';
 import type { CV, CVData, SectionType } from '@/types/cv.types';
 
 export function useCV() {
-  const store = useCVStore();
+  // Sadece state değerleri seç — stabil referanslar
+  const cvList    = useCVStore((s) => s.cvList);
+  const currentCV = useCVStore((s) => s.currentCV);
+  const isLoading = useCVStore((s) => s.isLoading);
+  const isSaving  = useCVStore((s) => s.isSaving);
+  const lastSaved = useCVStore((s) => s.lastSaved);
 
+  // Aksiyonlar: useCVStore.getState() ile erişilir → boş deps = stabil referans = döngü yok
   const fetchCVList = useCallback(async () => {
-    store.setIsLoading(true);
+    const { setIsLoading, setCVList } = useCVStore.getState();
+    setIsLoading(true);
     try {
       const response = await api.get<CV[]>('/api/cvs');
-      store.setCVList(response.data);
+      setCVList(response.data);
     } catch (err) {
       console.error('CV listesi alınamadı:', err);
-      store.setCVList([]);
+      setCVList([]);
     } finally {
-      store.setIsLoading(false);
+      setIsLoading(false);
     }
-  }, [store]);
+  }, []);
 
   const fetchCV = useCallback(async (id: string) => {
-    store.setIsLoading(true);
+    const { setIsLoading, setCurrentCV } = useCVStore.getState();
+    setIsLoading(true);
     try {
       const response = await api.get<CV>(`/api/cvs/${id}`);
-      store.setCurrentCV(response.data);
+      setCurrentCV(response.data);
       return response.data;
     } catch (err) {
       console.error('CV yüklenemedi:', err);
-      store.setCurrentCV(null);
+      setCurrentCV(null);
       throw err;
     } finally {
-      store.setIsLoading(false);
+      setIsLoading(false);
     }
-  }, [store]);
+  }, []);
 
   const createCV = useCallback(async (title: string) => {
+    const { setCVList, cvList: list } = useCVStore.getState();
     const response = await api.post<CV>('/api/cvs', { title });
-    store.setCVList([...store.cvList, response.data]);
+    setCVList([...list, response.data]);
     return response.data;
-  }, [store]);
+  }, []);
 
   const saveCV = useCallback(async () => {
-    if (!store.currentCV) return;
-    store.setIsSaving(true);
+    const { currentCV: cv, setIsSaving, setLastSaved } = useCVStore.getState();
+    if (!cv) return;
+    setIsSaving(true);
     try {
-      await api.put(`/api/cvs/${store.currentCV.id}`, store.currentCV);
-      store.setLastSaved(new Date());
+      await api.put(`/api/cvs/${cv.id}`, cv);
+      setLastSaved(new Date());
     } finally {
-      store.setIsSaving(false);
+      setIsSaving(false);
     }
-  }, [store]);
+  }, []);
 
   const deleteCV = useCallback(async (id: string) => {
+    const { setCVList, cvList: list } = useCVStore.getState();
     await api.delete(`/api/cvs/${id}`);
-    store.setCVList(store.cvList.filter((cv) => cv.id !== id));
-  }, [store]);
+    setCVList(list.filter((cv) => cv.id !== id));
+  }, []);
 
   const duplicateCV = useCallback(async (id: string) => {
+    const { setCVList, cvList: list } = useCVStore.getState();
     const response = await api.post<CV>(`/api/cvs/${id}/duplicate`);
-    store.setCVList([...store.cvList, response.data]);
+    setCVList([...list, response.data]);
     return response.data;
-  }, [store]);
+  }, []);
+
+  const hydrateCV = useCallback(async (id: string, data: CVData) => {
+    const { setCurrentCV, setCVList, cvList: list } = useCVStore.getState();
+    await api.put(`/api/cvs/${id}`, { data });
+    const response = await api.get<CV>(`/api/cvs/${id}`);
+    setCurrentCV(response.data);
+    setCVList(list.map((cv) => (cv.id === id ? response.data : cv)));
+    return response.data;
+  }, []);
 
   const updateSection = useCallback(
     (sectionType: SectionType, data: CVData[SectionType]) => {
-      store.updateSection(sectionType, data);
+      useCVStore.getState().updateSection(sectionType, data);
     },
-    [store]
+    []
   );
 
+  const setTemplate = useCallback((template: import('@/types/cv.types').TemplateType) => {
+    useCVStore.getState().setTemplate(template);
+  }, []);
+
+  const setAtsScore = useCallback((score: number) => {
+    useCVStore.getState().setAtsScore(score);
+  }, []);
+
   const updateCVTitle = useCallback(async (id: string, title: string) => {
+    const { setTitle, setCVList, cvList: list } = useCVStore.getState();
     await api.put(`/api/cvs/${id}`, { title });
-    store.setTitle(title);
-    // Also sync cvList entry so Dashboard shows updated title
-    const updated = store.cvList.map((cv) => cv.id === id ? { ...cv, title } : cv);
-    store.setCVList(updated);
-  }, [store]);
+    setTitle(title);
+    setCVList(list.map((cv) => (cv.id === id ? { ...cv, title } : cv)));
+  }, []);
+
+  const setAccentColor = useCallback((color: string | null) => {
+    useCVStore.getState().setAccentColor(color);
+  }, []);
+
+  const setFontFamily = useCallback((font: string | null) => {
+    useCVStore.getState().setFontFamily(font);
+  }, []);
+
+  const togglePublic = useCallback(() => {
+    useCVStore.getState().togglePublic();
+  }, []);
 
   return {
-    ...store,
+    cvList,
+    currentCV,
+    isLoading,
+    isSaving,
+    lastSaved,
     fetchCVList,
     fetchCV,
     createCV,
     saveCV,
     deleteCV,
     duplicateCV,
+    hydrateCV,
     updateSection,
+    setTemplate,
+    setAtsScore,
     updateCVTitle,
+    setAccentColor,
+    setFontFamily,
+    togglePublic,
   };
 }

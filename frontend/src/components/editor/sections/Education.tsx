@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { Education as EducationType } from '@/types/cv.types';
+import type { Education as EducationType, TemplateType } from '@/types/cv.types';
 import { generateId } from '@/lib/utils';
 
 interface Props {
   data: EducationType[];
+  template: TemplateType;
   onChange: (data: EducationType[]) => void;
 }
 
@@ -147,8 +148,12 @@ export default function Education({ data, onChange }: Props) {
   const move = (index: number, dir: 'up' | 'down') => {
     const newData = [...data];
     const target = dir === 'up' ? index - 1 : index + 1;
-    [newData[index], newData[target]] = [newData[target], newData[index]];
-    onChange(newData);
+    const temp = newData[index];
+    if (temp && newData[target]) {
+      newData[index] = newData[target];
+      newData[target] = temp;
+      onChange(newData);
+    }
   };
 
   return (

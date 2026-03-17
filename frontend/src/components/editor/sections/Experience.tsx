@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import type { Experience as ExperienceType } from '@/types/cv.types';
+import type { Experience as ExperienceType, TemplateType } from '@/types/cv.types';
 import { generateId } from '@/lib/utils';
 import AIAssistButton from '@/components/editor/AIAssistButton';
+import { useAI } from '@/hooks/useAI';
+import { Sparkles, Loader2 } from 'lucide-react';
+
 
 interface Props {
   data: ExperienceType[];
+  template: TemplateType;
   onChange: (data: ExperienceType[]) => void;
 }
 
@@ -23,13 +27,17 @@ interface ItemProps {
   item: ExperienceType;
   index: number;
   total: number;
+  template: TemplateType;
   onUpdate: (updated: ExperienceType) => void;
   onRemove: () => void;
   onMove: (dir: 'up' | 'down') => void;
 }
 
-function ExperienceItem({ item, index, total, onUpdate, onRemove, onMove }: ItemProps) {
+function ExperienceItem({ item, index, total, template, onUpdate, onRemove, onMove }: ItemProps) {
   const [isOpen, setIsOpen] = useState(index === 0);
+  const { bulletizeDescription, isLoading: isAiLoading } = useAI();
+  const [localIsLoading, setLocalIsLoading] = useState(false);
+
 
   const update = <K extends keyof ExperienceType>(field: K, value: ExperienceType[K]) => {
     onUpdate({ ...item, [field]: value });
@@ -38,6 +46,25 @@ function ExperienceItem({ item, index, total, onUpdate, onRemove, onMove }: Item
   const title = item.position && item.company
     ? `${item.position} — ${item.company}`
     : item.position || item.company || 'Yeni Deneyim';
+
+  const isTech = template === 'tech-focus';
+  const posPlaceholder = isTech ? 'Senior Backend Developer' : 'Pazarlama Uzmanı';
+  const descPlaceholder = isTech 
+    ? "Microservice mimarisine geçiş yaparak sistem performansını %40 artırdım." 
+    : "Sosyal medya kampanyaları yürüterek etkileşimi %20 artırdım.";
+
+  const handleBulletize = async () => {
+    if (!item.description || item.description.trim().length < 10) return;
+    setLocalIsLoading(true);
+    try {
+      const result = await bulletizeDescription(item.description, item.position);
+      update('description', result);
+    } catch {
+      // Error handled by hook
+    } finally {
+      setLocalIsLoading(false);
+    }
+  };
 
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -79,7 +106,7 @@ function ExperienceItem({ item, index, total, onUpdate, onRemove, onMove }: Item
                 type="text"
                 value={item.position}
                 onChange={(e) => update('position', e.target.value)}
-                placeholder="Yazılım Mühendisi"
+                placeholder={posPlaceholder}
                 className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
             </div>
@@ -140,20 +167,37 @@ function ExperienceItem({ item, index, total, onUpdate, onRemove, onMove }: Item
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-medium text-muted-foreground">Açıklama</label>
-              {item.description && item.description.trim().length > 10 && (
-                <AIAssistButton
-                  text={item.description}
-                  onAccept={(v) => update('description', v)}
-                  label="AI ile Güçlendir"
-                  compact
-                />
-              )}
+              <div className="flex items-center gap-2">
+                {item.description && item.description.trim().length > 10 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleBulletize}
+                      disabled={localIsLoading || isAiLoading}
+                      className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold hover:bg-blue-100 disabled:opacity-50 transition-colors"
+                    >
+                      {localIsLoading ? (
+                        <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-2.5 h-2.5" />
+                      )}
+                      Madde Madde Yaz
+                    </button>
+                    <AIAssistButton
+                      text={item.description}
+                      onAccept={(v) => update('description', v)}
+                      label="AI ile Güçlendir"
+                      compact
+                    />
+                  </>
+                )}
+              </div>
             </div>
             <textarea
               value={item.description}
               onChange={(e) => update('description', e.target.value)}
               rows={3}
-              placeholder="Başarılarınızı ve sorumluluklarınızı rakamsal verilerle destekleyin. Örn: 'Microservice mimarisine geçiş yaparak sistem performansını %40 artırdım.'"
+              placeholder={descPlaceholder}
               className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
             />
           </div>
@@ -163,7 +207,7 @@ function ExperienceItem({ item, index, total, onUpdate, onRemove, onMove }: Item
   );
 }
 
-export default function Experience({ data, onChange }: Props) {
+export default function Experience({ data, template, onChange }: Props) {
   const add = () => onChange([...data, emptyExperience()]);
 
   const remove = (id: string) => onChange(data.filter((e) => e.id !== id));
@@ -175,8 +219,12 @@ export default function Experience({ data, onChange }: Props) {
   const move = (index: number, dir: 'up' | 'down') => {
     const newData = [...data];
     const targetIndex = dir === 'up' ? index - 1 : index + 1;
-    [newData[index], newData[targetIndex]] = [newData[targetIndex], newData[index]];
-    onChange(newData);
+    const temp = newData[index];
+    if (temp && newData[targetIndex]) {
+      newData[index] = newData[targetIndex];
+      newData[targetIndex] = temp;
+      onChange(newData);
+    }
   };
 
   return (
@@ -187,6 +235,7 @@ export default function Experience({ data, onChange }: Props) {
           item={item}
           index={index}
           total={data.length}
+          template={template}
           onUpdate={(updated) => update(item.id, updated)}
           onRemove={() => remove(item.id)}
           onMove={(dir) => move(index, dir)}

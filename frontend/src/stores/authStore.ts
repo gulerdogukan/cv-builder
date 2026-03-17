@@ -7,6 +7,7 @@ interface AuthStore {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  _initialized: boolean;
   initialize: () => Promise<void>;
   login: (credentials: LoginCredentials) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
@@ -19,6 +20,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   isLoading: true,
   isAuthenticated: false,
+  _initialized: false,
 
   // Backend'e verify-token çağrısı yaparak kullanıcıyı DB ile senkronize eder
   syncUserWithBackend: async () => {
@@ -49,6 +51,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   initialize: async () => {
+    // React StrictMode'da çift çağrıyı önle
+    if (get()._initialized) return;
+    set({ _initialized: true });
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
@@ -73,8 +79,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
 
-    // Auth state değişikliklerini dinle
-    supabase.auth.onAuthStateChange((_event, session) => {
+    // Auth state değişikliklerini dinle (tek seferlik kayıt)
+    supabase.auth.onAuthStateChange((event, session) => {
+      // INITIAL_SESSION olayını skip et — initialize() zaten yönetti
+      if (event === 'INITIAL_SESSION') return;
+
       if (session?.user) {
         set({
           user: {
@@ -88,8 +97,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           isLoading: false,
         });
 
-        // Her auth değişikliğinde backend ile senkronize et
-        get().syncUserWithBackend();
+        // SIGNED_IN ve TOKEN_REFRESHED olaylarında backend ile senkronize et
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          get().syncUserWithBackend();
+        }
       } else {
         set({ user: null, isAuthenticated: false, isLoading: false });
       }
@@ -120,7 +131,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     if (error) {
       set({ isLoading: false });

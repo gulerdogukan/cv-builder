@@ -10,4 +10,5 @@ public interface ICVService
     Task<CVDetailDto?> UpdateCVAsync(Guid cvId, Guid userId, UpdateCVRequest request);
     Task<bool> DeleteCVAsync(Guid cvId, Guid userId);
     Task<CVDetailDto?> DuplicateCVAsync(Guid cvId, Guid userId);
+    Task<CVDetailDto?> GetPublicCVAsync(Guid cvId);
 }

@@ -35,7 +35,20 @@
     <!-- apple-touch-icon: replace /apple-touch-icon.png with a real 180×180 PNG in production -->
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#2563eb" />
+    <meta name="theme-color" content="#6366f1" />
+
+    <!-- Dark mode FOUC önleyici: React yüklenmeden önce temayı uygular -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('cv-builder-theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (t === 'dark' || (!t && prefersDark)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (_) {}
+      })();
+    </script>
 
     <!-- Structured Data — WebApplication -->
     <script type="application/ld+json">

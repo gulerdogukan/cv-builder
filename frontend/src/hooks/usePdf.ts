@@ -44,14 +44,25 @@ export function usePdf() {
         const axiosErr = err as {
           response?: { status: number; data?: Blob };
         };
+        const status = axiosErr.response?.status;
 
-        if (axiosErr.response?.status === 402) {
+        if (status === 402) {
           setError('PDF indirme özelliği sadece Premium kullanıcılara açıktır.');
           throw new Error('UPGRADE_REQUIRED');
         }
 
-        if (axiosErr.response?.status === 503) {
-          setError('PDF servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.');
+        if (status === 503 || status === 500) {
+          // Error body is a Blob when responseType:'blob' — read it for details
+          let detail = 'PDF servisi şu anda kullanılamıyor.';
+          try {
+            const blob = axiosErr.response?.data as Blob;
+            const text = await blob.text();
+            const json = JSON.parse(text);
+            if (json?.error) detail = json.error;
+          } catch {
+            // ignore — use default message
+          }
+          setError(detail);
           throw new Error('SERVICE_UNAVAILABLE');
         }
       }

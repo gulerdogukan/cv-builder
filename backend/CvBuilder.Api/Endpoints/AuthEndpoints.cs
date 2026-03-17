@@ -12,15 +12,12 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/api/auth").WithTags("Auth");
 
-        // Token doğrulama + User sync (upsert)
-        // Frontend login sonrası bu endpoint'e istek atarak kullanıcıyı DB'ye sync eder
+        // POST /api/auth/verify-token — token doğrula + DB upsert
         group.MapPost("/verify-token", async (HttpContext context, AppDbContext db) =>
         {
             var userId = context.GetUserId();
-            if (userId is null)
-                return Results.Unauthorized();
+            if (userId is null) return Results.Unauthorized();
 
-            // JWT'den email ve full_name çıkar
             var email = context.User.FindFirst("email")?.Value
                 ?? context.User.FindFirst(JwtRegisteredClaimNames.Email)?.Value
                 ?? "";
@@ -29,86 +26,97 @@ public static class AuthEndpoints
                 ?? context.User.FindFirst("user_metadata.full_name")?.Value
                 ?? "";
 
-            // Users tablosunda var mı kontrol et, yoksa oluştur
+            // Race-safe upsert: önce bul, yoksa ekle
             var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId.Value);
 
             if (user is null)
             {
                 user = new User
                 {
-                    Id = userId.Value,
-                    Email = email,
-                    FullName = fullName,
-                    Plan = PlanType.Free,
+                    Id        = userId.Value,
+                    Email     = email,
+                    FullName  = fullName,
+                    Plan      = PlanType.Free,
                     CreatedAt = DateTime.UtcNow,
                 };
                 db.Users.Add(user);
-                await db.SaveChangesAsync();
+                try
+                {
+                    await db.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    // Eş zamanlı iki istek aynı anda Insert yapmış olabilir — yeniden çek
+                    db.ChangeTracker.Clear();
+                    user = await db.Users.FirstAsync(u => u.Id == userId.Value);
+                }
             }
             else
             {
-                // Email veya isim değişmişse güncelle
                 var updated = false;
-                if (!string.IsNullOrEmpty(email) && user.Email != email)
-                {
-                    user.Email = email;
-                    updated = true;
-                }
-                if (!string.IsNullOrEmpty(fullName) && user.FullName != fullName)
-                {
-                    user.FullName = fullName;
-                    updated = true;
-                }
+                if (!string.IsNullOrEmpty(email) && user.Email != email)     { user.Email = email; updated = true; }
+                if (!string.IsNullOrEmpty(fullName) && user.FullName != fullName) { user.FullName = fullName; updated = true; }
                 if (updated) await db.SaveChangesAsync();
             }
 
             return Results.Ok(new
             {
-                userId = user.Id,
-                email = user.Email,
+                userId   = user.Id,
+                email    = user.Email,
                 fullName = user.FullName,
-                plan = user.Plan.ToString().ToLower(),
+                plan     = user.Plan.ToString().ToLower(),
             });
         })
         .RequireAuthorization();
 
-        // Supabase webhook — yeni kullanıcı kaydında çağrılır
-        // Supabase Dashboard > Database > Webhooks'dan ayarlanır
+        // POST /api/auth/webhook/user-created — Supabase webhook
         group.MapPost("/webhook/user-created", async (
             HttpContext context,
             AppDbContext db,
             IConfiguration config) =>
         {
-            // Basit webhook secret doğrulama
+            // Secret zorunlu — boş bırakılırsa endpoint 503 döner (yanlış config uyarısı)
             var webhookSecret = config["Supabase:WebhookSecret"] ?? "";
-            if (!string.IsNullOrEmpty(webhookSecret))
+            if (string.IsNullOrEmpty(webhookSecret))
             {
-                var authHeader = context.Request.Headers["x-webhook-secret"].ToString();
-                if (authHeader != webhookSecret)
-                    return Results.Unauthorized();
+                // Secret konfigüre edilmemiş — güvenlik riski, isteği reddet
+                return Results.Problem(
+                    detail: "Supabase:WebhookSecret konfigüre edilmemiş.",
+                    statusCode: 503);
             }
+
+            var authHeader = context.Request.Headers["x-webhook-secret"].ToString();
+            if (authHeader != webhookSecret)
+                return Results.Unauthorized();
 
             var payload = await context.Request.ReadFromJsonAsync<SupabaseWebhookPayload>();
             if (payload?.Record is null)
-                return Results.BadRequest("Invalid payload");
+                return Results.BadRequest("Geçersiz payload");
 
             if (!Guid.TryParse(payload.Record.Id, out var id))
-                return Results.BadRequest("Invalid user ID");
+                return Results.BadRequest("Geçersiz kullanıcı ID");
 
+            // Race-safe upsert
             var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Id == id);
-
             if (existingUser is null)
             {
-                var user = new User
+                db.Users.Add(new User
                 {
-                    Id = id,
-                    Email = payload.Record.Email ?? "",
-                    FullName = payload.Record.RawUserMetaData?.FullName ?? "",
-                    Plan = PlanType.Free,
+                    Id        = id,
+                    Email     = payload.Record.Email ?? "",
+                    FullName  = payload.Record.RawUserMetaData?.FullName ?? "",
+                    Plan      = PlanType.Free,
                     CreatedAt = DateTime.UtcNow,
-                };
-                db.Users.Add(user);
-                await db.SaveChangesAsync();
+                });
+                try
+                {
+                    await db.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    // Duplicate — zaten oluşturulmuş, sorun değil
+                    db.ChangeTracker.Clear();
+                }
             }
 
             return Results.Ok();
@@ -116,19 +124,18 @@ public static class AuthEndpoints
     }
 }
 
-// Supabase webhook payload modelleri
 public record SupabaseWebhookPayload
 {
-    public string? Type { get; init; }
-    public string? Table { get; init; }
+    public string? Type   { get; init; }
+    public string? Table  { get; init; }
     public string? Schema { get; init; }
     public SupabaseWebhookRecord? Record { get; init; }
 }
 
 public record SupabaseWebhookRecord
 {
-    public string Id { get; init; } = "";
-    public string? Email { get; init; }
+    public string  Id                { get; init; } = "";
+    public string? Email             { get; init; }
     public SupabaseUserMetaData? RawUserMetaData { get; init; }
 }
 

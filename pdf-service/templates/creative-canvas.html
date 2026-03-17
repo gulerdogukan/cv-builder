@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #334155;
+      background: #fff;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 14mm 16mm 14mm;
+    }
+
+    /* ─── Header (table-based for solid PDF rendering) ─── */
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-bottom: 2px solid #f0abfc;
+      padding-bottom: 10mm;
+      margin-bottom: 9mm;
+    }
+    .header-table td { vertical-align: top; padding: 0; }
+    .header-name-cell { width: 60%; }
+    .header-contact-cell { width: 40%; text-align: right; }
+
+    .name-text {
+      font-size: 28pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.05;
+      color: #c026d3;
+    }
+    .subtitle-text {
+      font-size: 10pt;
+      font-weight: 500;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 5px;
+    }
+    .contact-line {
+      font-size: 8.5pt;
+      color: #475569;
+      line-height: 1.8;
+      text-align: right;
+    }
+    .contact-icon { color: #c026d3; }
+
+    /* ─── Summary ─── */
+    .summary-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6mm 8mm;
+      margin-bottom: 9mm;
+    }
+    .summary-box p {
+      font-size: 10pt;
+      color: #1e293b;
+      line-height: 1.65;
+      font-weight: 500;
+    }
+
+    /* ─── Two-column layout (table-based) ─── */
+    .columns-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .columns-table td { vertical-align: top; padding: 0; }
+    .main-cell { width: 62%; padding-right: 8mm; }
+    .side-cell { width: 38%; }
+
+    /* ─── Section title ─── */
+    .section { margin-bottom: 8mm; }
+    .section-title {
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.8px;
+      color: #c026d3;
+      border-bottom: 1px solid #f0abfc;
+      padding-bottom: 4px;
+      margin-bottom: 5mm;
+    }
+
+    /* ─── Experience ─── */
+    .experience-item {
+      margin-bottom: 7mm;
+      padding: 4mm 5mm;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-left: 3px solid #c026d3;
+      border-radius: 6px;
+    }
+    .exp-header-table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
+    .exp-header-table td { vertical-align: middle; padding: 0; }
+    .exp-pos { font-size: 10pt; font-weight: 700; color: #0f172a; }
+    .exp-date {
+      font-size: 8pt;
+      font-weight: 700;
+      color: #c026d3;
+      background: #fdf4ff;
+      padding: 1px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+      text-align: right;
+    }
+    .exp-company { font-size: 9pt; font-weight: 600; color: #7c3aed; margin-top: 2px; }
+    .exp-location { color: #94a3b8; font-weight: 400; }
+    .item-desc { font-size: 9pt; color: #475569; margin-top: 5px; line-height: 1.55; }
+
+    /* ─── Education ─── */
+    .education-item {
+      padding: 4mm 5mm;
+      border-radius: 6px;
+      background: #faf5ff;
+      border: 1px solid #ede9fe;
+      margin-bottom: 5mm;
+    }
+    .edu-school { font-size: 10pt; font-weight: 700; color: #0f172a; }
+    .edu-degree { font-size: 9pt; font-weight: 500; color: #374151; margin-top: 2px; }
+    .edu-field { font-size: 8.5pt; color: #64748b; }
+    .edu-bottom-table { width: 100%; border-collapse: collapse; margin-top: 5px; padding-top: 4px; border-top: 1px solid #ede9fe; }
+    .edu-bottom-table td { vertical-align: middle; padding: 0; }
+    .edu-date { font-size: 8pt; font-weight: 600; color: #7c3aed; }
+    .edu-gpa { font-size: 8pt; color: #374151; text-align: right; }
+
+    /* ─── Skills ─── */
+    .skill-tag {
+      display: inline-block;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      color: #374151;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 8.5pt;
+      font-weight: 500;
+      margin: 2px 3px 2px 0;
+    }
+
+    /* ─── Languages ─── */
+    .lang-item {
+      display: block;
+      font-size: 9pt;
+      padding: 3px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .lang-level {
+      font-size: 8pt;
+      color: #7c3aed;
+      font-weight: 600;
+    }
+
+    /* ─── Certifications ─── */
+    .cert-item {
+      padding-left: 10px;
+      border-left: 2px solid #f0abfc;
+      margin-bottom: 5mm;
+    }
+    .cert-name { font-size: 9pt; font-weight: 700; color: #0f172a; }
+    .cert-issuer { font-size: 8.5pt; color: #64748b; margin-top: 1px; }
+    .cert-date { font-size: 8pt; color: #9ca3af; margin-top: 1px; }
+
+    .empty-section { color: #9ca3af; font-size: 9pt; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <table class="header-table">
+      <tr>
+        <td class="header-name-cell">
+          <div class="name-text">{{fullName}}</div>
+          <div class="subtitle-text">{{profession}}</div>
+        </td>
+        <td class="header-contact-cell">
+          <div class="contact-line">
+            {{location}} <span class="contact-icon">📍</span><br>
+            {{email}} <span class="contact-icon">✉</span><br>
+            {{phone}} <span class="contact-icon">📱</span><br>
+            {{linkedin}} <span class="contact-icon">🔗</span><br>
+            {{github}}<br>
+            {{website}}
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Summary -->
+    <div class="summary-box">
+      <p>{{summary}}</p>
+    </div>
+
+    <!-- Two-column body -->
+    <table class="columns-table">
+      <tr>
+        <!-- Main column: Experience + Education -->
+        <td class="main-cell">
+          <div class="section">
+            <div class="section-title">Deneyim</div>
+            {{experienceList}}
+          </div>
+
+          <div class="section">
+            <div class="section-title">Eğitim</div>
+            {{educationList}}
+          </div>
+        </td>
+
+        <!-- Sidebar: Skills, Languages, Certs -->
+        <td class="side-cell">
+          <div class="section">
+            <div class="section-title">Uzmanlık</div>
+            {{skillsList}}
+          </div>
+
+          <div class="section">
+            <div class="section-title">Diller</div>
+            {{languagesList}}
+          </div>
+
+          <div class="section">
+            <div class="section-title">Sertifikalar</div>
+            {{certificationsList}}
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

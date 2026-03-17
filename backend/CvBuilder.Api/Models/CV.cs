@@ -26,6 +26,12 @@ public class CV
 
     public int AtsScore { get; set; } = 0;
 
+    [MaxLength(20)]
+    public string? AccentColor { get; set; } = null;
+
+    [MaxLength(50)]
+    public string? FontFamily { get; set; } = null;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

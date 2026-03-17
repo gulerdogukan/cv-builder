@@ -1,0 +1,99 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - link "CV Builder" [ref=e5] [cursor=pointer]:
+      - /url: /
+    - generic [ref=e6]:
+      - link "Giriş Yap" [ref=e7] [cursor=pointer]:
+        - /url: /login
+      - link "Ücretsiz Başla" [ref=e8] [cursor=pointer]:
+        - /url: /register
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - heading "Fiyatlandırma" [level=1] [ref=e11]
+      - paragraph [ref=e12]: İhtiyacınıza uygun planı seçin. İstediğiniz zaman iptal edebilirsiniz.
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - heading "Ücretsiz" [level=3] [ref=e16]
+          - paragraph [ref=e17]: Temel özellikler ile başlayın
+          - generic [ref=e19]: 0₺
+        - list [ref=e20]:
+          - listitem [ref=e21]:
+            - generic [ref=e22]: ✓
+            - generic [ref=e23]: 1 CV oluşturma
+          - listitem [ref=e24]:
+            - generic [ref=e25]: ✓
+            - generic [ref=e26]: Tüm şablonları önizle
+          - listitem [ref=e27]:
+            - generic [ref=e28]: ✓
+            - generic [ref=e29]: Günde 5 AI önerisi
+          - listitem [ref=e30]:
+            - generic [ref=e31]: ✕
+            - generic [ref=e32]: PDF indirme
+          - listitem [ref=e33]:
+            - generic [ref=e34]: ✕
+            - generic [ref=e35]: Sınırsız CV
+        - button "Ücretsiz Başla" [ref=e36] [cursor=pointer]
+      - generic [ref=e37]:
+        - generic [ref=e38]: EN POPÜLER
+        - generic [ref=e39]:
+          - heading "Tek Seferlik" [level=3] [ref=e40]
+          - paragraph [ref=e41]: Bir kez öde, sonsuza kadar kullan
+          - generic [ref=e42]:
+            - generic [ref=e43]: 99₺
+            - generic [ref=e44]: tek ödeme
+        - list [ref=e45]:
+          - listitem [ref=e46]:
+            - generic [ref=e47]: ✓
+            - generic [ref=e48]: 3 CV oluşturma
+          - listitem [ref=e49]:
+            - generic [ref=e50]: ✓
+            - generic [ref=e51]: Tüm şablonlar
+          - listitem [ref=e52]:
+            - generic [ref=e53]: ✓
+            - generic [ref=e54]: Günde 20 AI önerisi
+          - listitem [ref=e55]:
+            - generic [ref=e56]: ✓
+            - generic [ref=e57]: Sınırsız PDF indirme
+          - listitem [ref=e58]:
+            - generic [ref=e59]: ✕
+            - generic [ref=e60]: Sınırsız CV
+        - button "Satın Al" [ref=e61] [cursor=pointer]
+      - generic [ref=e62]:
+        - generic [ref=e63]:
+          - heading "Aylık" [level=3] [ref=e64]
+          - paragraph [ref=e65]: Tüm özelliklere sınırsız erişim
+          - generic [ref=e66]:
+            - generic [ref=e67]: 49₺
+            - generic [ref=e68]: /ay
+        - list [ref=e69]:
+          - listitem [ref=e70]:
+            - generic [ref=e71]: ✓
+            - generic [ref=e72]: Sınırsız CV
+          - listitem [ref=e73]:
+            - generic [ref=e74]: ✓
+            - generic [ref=e75]: Tüm şablonlar
+          - listitem [ref=e76]:
+            - generic [ref=e77]: ✓
+            - generic [ref=e78]: Sınırsız AI önerisi
+          - listitem [ref=e79]:
+            - generic [ref=e80]: ✓
+            - generic [ref=e81]: Sınırsız PDF indirme
+          - listitem [ref=e82]:
+            - generic [ref=e83]: ✓
+            - generic [ref=e84]: Öncelikli destek
+        - button "Abone Ol" [ref=e85] [cursor=pointer]
+    - generic [ref=e86]:
+      - generic [ref=e87]:
+        - img [ref=e88]
+        - text: 256-bit SSL Şifreleme
+      - generic [ref=e90]:
+        - img [ref=e91]
+        - text: İyzico ile Güvenli Ödeme
+      - generic [ref=e93]:
+        - img [ref=e94]
+        - text: Anında Aktivasyon
+```

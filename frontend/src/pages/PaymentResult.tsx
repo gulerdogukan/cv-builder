@@ -10,7 +10,7 @@ export default function PaymentResult() {
   useSEO({ title: 'Ödeme Sonucu', noIndex: true });
   const [searchParams] = useSearchParams();
   const token  = searchParams.get('token');
-  const status = searchParams.get('status'); // İyzico bazı durumlarda ekler
+  searchParams.get('status'); // İyzico bazı durumlarda ekler
 
   const { verifyPayment } = usePayment();
   const { syncUserWithBackend } = useAuthStore();

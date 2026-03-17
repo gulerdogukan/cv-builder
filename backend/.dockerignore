@@ -1,0 +1,12 @@
+bin/
+obj/
+out/
+.vs/
+.vscode/
+node_modules/
+*.user
+*.lock.json
+Dockerfile
+railway.toml
+CvBuilder.sln
+CvBuilder.Api.Tests/

@@ -14,30 +14,33 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Authentication — Supabase JWT
+// Authentication — Supabase JWT (ES256, OIDC discovery ile otomatik key yönetimi)
 var supabaseUrl = builder.Configuration["Supabase:Url"] ?? "";
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Supabase OIDC discovery endpoint — JWKS otomatik çekilir, ES256 public key kullanılır
         options.Authority = $"{supabaseUrl}/auth/v1";
+        options.MetadataAddress = $"{supabaseUrl}/auth/v1/.well-known/openid-configuration";
+        options.RequireHttpsMetadata = true; // Supabase HTTPS — production'da da güvenli
+        // MapInboundClaims=false: "sub" → NameIdentifier otomatik dönüşümünü devre dışı bırakır
+        // Bu sayede JWT claim'leri olduğu gibi kalır ve context.User.FindFirst("sub") çalışır
+        options.MapInboundClaims = false;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuerSigningKey = true,
+            ValidateIssuerSigningKey = true,   // JWKS'den gelen EC key ile doğrula
             ValidateIssuer = true,
             ValidIssuer = $"{supabaseUrl}/auth/v1",
             ValidateAudience = true,
             ValidAudience = "authenticated",
             ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(5),
+            NameClaimType = "sub",   // context.User.Identity.Name = sub claim değeri
+            RoleClaimType = "role",  // context.User.IsInRole() = role claim değeri
+            // IssuerSigningKey YOK — Authority üzerinden JWKS'den otomatik alınır
         };
-        // Development: token doğrulama gevşet
-        if (builder.Environment.IsDevelopment())
-        {
-            options.RequireHttpsMetadata = false;
-            options.TokenValidationParameters.ValidateIssuerSigningKey = false;
-            options.TokenValidationParameters.ValidateIssuer = false;
-            options.TokenValidationParameters.SignatureValidator = (token, _) =>
-                new JwtSecurityToken(token);
-        }
     });
 
 builder.Services.AddAuthorization();
@@ -137,6 +140,13 @@ app.MapAIEndpoints();
 app.MapPaymentEndpoints();
 app.MapPdfEndpoints();
 
+// Anonymous: public CV share
+app.MapGet("/api/public/cv/{id:guid}", async (Guid id, ICVService cvService) =>
+{
+    var cv = await cvService.GetPublicCVAsync(id);
+    return cv is null ? Results.NotFound() : Results.Ok(cv);
+});
+
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "OK", timestamp = DateTime.UtcNow }));
 
@@ -166,6 +176,13 @@ app.MapGet("/health", () => Results.Ok(new { status = "OK", timestamp = DateTime
               ON "Payments" ("IyzicoToken")
               WHERE "IyzicoToken" IS NOT NULL;
             """);
+
+        // AccentColor + FontFamily columns (Phase 4)
+        await db.Database.ExecuteSqlRawAsync("""
+            ALTER TABLE "CVs"
+              ADD COLUMN IF NOT EXISTS "AccentColor" varchar(20) NULL,
+              ADD COLUMN IF NOT EXISTS "FontFamily" varchar(50) NULL;
+            """);
     }
     catch (Exception ex)
     {
@@ -175,3 +192,6 @@ app.MapGet("/health", () => Results.Ok(new { status = "OK", timestamp = DateTime
 }
 
 app.Run();
+
+// Required for WebApplicationFactory in integration tests
+public partial class Program { }

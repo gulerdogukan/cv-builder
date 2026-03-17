@@ -4,6 +4,7 @@ using CvBuilder.Api.Middleware;
 using CvBuilder.Api.Models;
 using CvBuilder.Api.Services;
 using Microsoft.EntityFrameworkCore;
+using UglyToad.PdfPig;
 
 namespace CvBuilder.Api.Endpoints;
 
@@ -75,7 +76,7 @@ public static class AIEndpoints
                 }
             }
 
-            var (score, suggestions) = await aiService.CalculateATSScoreAsync(cvDataJson);
+            var (score, readability, keyword, completeness, impact, suggestions) = await aiService.CalculateATSScoreAsync(cvDataJson);
 
             // ATS skorunu CV kaydına yaz
             if (!string.IsNullOrEmpty(request.CvId) && Guid.TryParse(request.CvId, out var scoreGuid))
@@ -88,7 +89,7 @@ public static class AIEndpoints
                 }
             }
 
-            return Results.Ok(new ATSScoreResponse(score, suggestions)
+            return Results.Ok(new ATSScoreResponse(score, readability, keyword, completeness, impact, suggestions)
             {
                 RemainingRequests = rateLimitResult.Remaining
             });
@@ -117,6 +118,160 @@ public static class AIEndpoints
             });
         });
 
+        // POST /api/ai/generate-summary
+        group.MapPost("/generate-summary", async (
+            GenerateSummaryRequest request,
+            IAIService aiService,
+            AppDbContext db,
+            HttpContext ctx) =>
+        {
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
+
+            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
+            if (!rateLimitResult.Allowed)
+                return Results.Json(
+                    new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
+                    statusCode: 429);
+
+            var drafts = await aiService.GenerateSummaryAsync(request.CvDataJson, request.TargetPosition, request.TargetDescription);
+            return Results.Ok(new GenerateSummaryResponse(drafts)
+            {
+                RemainingRequests = rateLimitResult.Remaining
+            });
+        });
+
+        // POST /api/ai/import-linkedin
+        group.MapPost("/import-linkedin", async (
+            LinkedInImportRequest request,
+            IAIService aiService,
+            AppDbContext db,
+            HttpContext ctx) =>
+        {
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(request.ProfileText))
+                return Results.BadRequest(new { error = "LinkedIn profil metni boş olamaz." });
+
+            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
+            if (!rateLimitResult.Allowed)
+                return Results.Json(
+                    new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
+                    statusCode: 429);
+
+            try
+            {
+                var cvDataJson = await aiService.ImportLinkedInAsync(request.ProfileText);
+                return Results.Ok(new LinkedInImportResponse { CvDataJson = cvDataJson, RemainingRequests = rateLimitResult.Remaining });
+            }
+            catch (Exception)
+            {
+                return Results.Problem("LinkedIn profili işlenirken bir hata oluştu.");
+            }
+        });
+
+        // POST /api/ai/import-cv
+        group.MapPost("/import-cv", async (
+            IFormFile file,
+            IAIService aiService,
+            AppDbContext db,
+            HttpContext ctx) =>
+        {
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
+
+            if (file == null || file.Length == 0)
+                return Results.BadRequest(new { error = "Geçerli bir dosya yüklenmedi." });
+
+            if (file.ContentType != "application/pdf")
+                return Results.BadRequest(new { error = "Sadece PDF formatı desteklenmektedir." });
+
+            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
+            if (!rateLimitResult.Allowed)
+                return Results.Json(
+                    new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
+                    statusCode: 429);
+
+            try
+            {
+                string rawText = "";
+                using (var stream = file.OpenReadStream())
+                using (var document = PdfDocument.Open(stream))
+                {
+                    foreach (var page in document.GetPages())
+                    {
+                        rawText += page.Text + "\n";
+                    }
+                }
+
+                var parsedJsonResult = await aiService.ParsePdfToCvDataAsync(rawText);
+
+                return Results.Ok(new 
+                { 
+                    success = true, 
+                    data = parsedJsonResult,
+                    remainingRequests = rateLimitResult.Remaining 
+                });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: ex.Message, title: "PDF okuma veya AI dönüştürme hatası");
+            }
+        }).DisableAntiforgery();
+
+        // POST /api/ai/cover-letter
+        group.MapPost("/cover-letter", async (
+            CoverLetterRequest request,
+            IAIService aiService,
+            AppDbContext db,
+            HttpContext ctx) =>
+        {
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
+
+            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
+            if (!rateLimitResult.Allowed)
+                return Results.Json(
+                    new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
+                    statusCode: 429);
+
+            var letter = await aiService.GenerateCoverLetterAsync(request.CvDataJson, request.JobDescription);
+            return Results.Ok(new CoverLetterResponse(letter)
+            {
+                RemainingRequests = rateLimitResult.Remaining
+            });
+        });
+
+        // POST /api/ai/match-job
+        group.MapPost("/match-job", async (
+            JobMatchRequest request,
+            IAIService aiService,
+            AppDbContext db,
+            HttpContext ctx) =>
+        {
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
+
+            // Sadece Premium kullanıcılar Match Job yapabilir (Opsiyonel: Veya rate limit azaltılabilir)
+            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
+            if (!rateLimitResult.Allowed)
+                return Results.Json(
+                    new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
+                    statusCode: 429);
+
+            var result = await aiService.MatchJobAsync(request.CvDataJson, request.JobDescription);
+            
+            return Results.Ok(new JobMatchResponse
+            {
+                MatchScore = result.MatchScore,
+                MatchingSkills = result.MatchingSkills,
+                MissingSkills = result.MissingSkills,
+                Advice = result.Advice,
+                RemainingRequests = rateLimitResult.Remaining
+            });
+        });
+
         // GET /api/ai/rate-limit — mevcut limit durumunu sorgula
         group.MapGet("/rate-limit", async (AppDbContext db, HttpContext ctx) =>
         {
@@ -138,6 +293,29 @@ public static class AIEndpoints
                 remaining = isPaid ? (int?)null : remaining,
                 resetAt = user.AiRequestsResetAt.AddDays(1).ToString("O")
             });
+        });
+
+        // POST /api/ai/bulletize
+        group.MapPost("/bulletize", async (
+            BulletizeRequest request,
+            IAIService aiService,
+            AppDbContext db,
+            HttpContext ctx) =>
+        {
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(request.Description))
+                return Results.BadRequest(new { error = "Açıklama boş olamaz." });
+
+            var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
+            if (!rateLimitResult.Allowed)
+                return Results.Json(
+                    new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
+                    statusCode: 429);
+
+            var bullets = await aiService.BulletizeDescriptionAsync(request.Description, request.JobTitle);
+            return Results.Ok(new BulletizeResponse { Bullets = bullets, RemainingRequests = rateLimitResult.Remaining });
         });
     }
 

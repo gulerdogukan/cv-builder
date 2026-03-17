@@ -21,7 +21,8 @@ public class CVService : ICVService
             .Where(c => c.UserId == userId)
             .OrderByDescending(c => c.UpdatedAt)
             .Select(c => new CVListItemDto(
-                c.Id, c.Title, c.Template, c.Language, c.AtsScore, c.CreatedAt, c.UpdatedAt
+                c.Id, c.Title, c.Template, c.Language, c.AtsScore,
+                c.AccentColor, c.FontFamily, c.CreatedAt, c.UpdatedAt
             ))
             .ToListAsync();
     }
@@ -90,6 +91,8 @@ public class CVService : ICVService
         if (request.Template is not null) cv.Template = request.Template;
         if (request.Language is not null) cv.Language = request.Language;
         if (request.IsPublic.HasValue) cv.IsPublic = request.IsPublic.Value;
+        if (request.AccentColor is not null) cv.AccentColor = request.AccentColor == "" ? null : request.AccentColor;
+        if (request.FontFamily is not null) cv.FontFamily = request.FontFamily == "" ? null : request.FontFamily;
 
         if (request.Data is not null)
         {
@@ -149,6 +152,8 @@ public class CVService : ICVService
             Title = $"{cv.Title} (Kopya)",
             Template = cv.Template,
             Language = cv.Language,
+            AccentColor = cv.AccentColor,
+            FontFamily = cv.FontFamily,
         };
 
         foreach (var section in cv.Sections)
@@ -188,7 +193,17 @@ public class CVService : ICVService
 
         return new CVDetailDto(
             cv.Id, cv.UserId, cv.Title, cv.Template, cv.Language,
-            cv.IsPublic, cv.AtsScore, data, cv.CreatedAt, cv.UpdatedAt
+            cv.IsPublic, cv.AtsScore, cv.AccentColor, cv.FontFamily, data, cv.CreatedAt, cv.UpdatedAt
         );
+    }
+
+    public async Task<CVDetailDto?> GetPublicCVAsync(Guid cvId)
+    {
+        var cv = await _db.CVs
+            .Include(c => c.Sections)
+            .FirstOrDefaultAsync(c => c.Id == cvId && c.IsPublic);
+        
+        if (cv is null) return null;
+        return MapToDetailDto(cv);
     }
 }

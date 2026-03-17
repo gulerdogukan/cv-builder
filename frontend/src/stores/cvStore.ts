@@ -16,6 +16,9 @@ interface CVStore {
   setLastSaved: (date: Date) => void;
   setAtsScore: (score: number) => void;
   setTitle: (title: string) => void;
+  setAccentColor: (color: string | null) => void;
+  setFontFamily: (font: string | null) => void;
+  togglePublic: () => void;
 }
 
 export const useCVStore = create<CVStore>((set) => ({
@@ -68,5 +71,23 @@ export const useCVStore = create<CVStore>((set) => ({
     set((state) => {
       if (!state.currentCV) return state;
       return { currentCV: { ...state.currentCV, title } };
+    }),
+  
+  setAccentColor: (color) =>
+    set((state) => {
+      if (!state.currentCV) return state;
+      return { currentCV: { ...state.currentCV, accentColor: color } };
+    }),
+
+  setFontFamily: (font) =>
+    set((state) => {
+      if (!state.currentCV) return state;
+      return { currentCV: { ...state.currentCV, fontFamily: font } };
+    }),
+
+  togglePublic: () =>
+    set((state) => {
+      if (!state.currentCV) return state;
+      return { currentCV: { ...state.currentCV, isPublic: !state.currentCV.isPublic } };
     }),
 }));

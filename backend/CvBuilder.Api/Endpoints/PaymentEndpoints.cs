@@ -64,6 +64,8 @@ public static class PaymentEndpoints
             if (userId is null) return Results.Unauthorized();
 
             var status = await paymentService.GetPaymentStatusAsync(userId.Value);
+            // null → kullanıcı DB'de yok (henüz verify-token çağrılmadı)
+            if (status is null) return Results.NotFound(new { error = "Kullanıcı bulunamadı" });
             return Results.Ok(status);
         })
         .RequireAuthorization();

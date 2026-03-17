@@ -51,12 +51,36 @@ public class PdfService : IPdfService
         }
 
         var resultJson = await response.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(resultJson);
 
-        if (!doc.RootElement.TryGetProperty("pdf", out var pdfProp))
-            throw new InvalidOperationException("PDF servisi beklenmedik yanit dondurudu.");
+        JsonDocument doc;
+        try
+        {
+            doc = JsonDocument.Parse(resultJson);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "PDF servisi gecersiz JSON dondurudu. Body: {Body}", resultJson[..Math.Min(200, resultJson.Length)]);
+            throw new InvalidOperationException("PDF servisi gecersiz yanit dondurudu.");
+        }
 
-        var base64 = pdfProp.GetString() ?? throw new InvalidOperationException("PDF verisi bos.");
-        return Convert.FromBase64String(base64);
+        using (doc)
+        {
+            if (!doc.RootElement.TryGetProperty("pdf", out var pdfProp))
+            {
+                _logger.LogError("PDF servisi yaniti 'pdf' alani icermiyor. Body: {Body}", resultJson[..Math.Min(200, resultJson.Length)]);
+                throw new InvalidOperationException("PDF servisi beklenmedik yanit dondurudu.");
+            }
+
+            var base64 = pdfProp.GetString() ?? throw new InvalidOperationException("PDF verisi bos.");
+            try
+            {
+                return Convert.FromBase64String(base64);
+            }
+            catch (FormatException ex)
+            {
+                _logger.LogError(ex, "PDF base64 decode hatasi.");
+                throw new InvalidOperationException("PDF verisi gecersiz formatta.");
+            }
+        }
     }
 }

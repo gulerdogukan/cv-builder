@@ -20,8 +20,12 @@ public class AuthMiddleware
     {
         if (context.User.Identity?.IsAuthenticated == true)
         {
+            // MapInboundClaims=false → "sub" olduğu gibi kalır
+            // MapInboundClaims=true (default) → "sub" ClaimTypes.NameIdentifier'a maplenir
+            // Her iki durumu da destekle:
             var subClaim = context.User.FindFirst("sub")?.Value
-                ?? context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                ?? context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                ?? context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
             if (Guid.TryParse(subClaim, out var userId))
             {

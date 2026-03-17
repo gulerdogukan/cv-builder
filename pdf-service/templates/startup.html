@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #334155;
+      background: #fff;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 0 0 14mm 0;
+    }
+
+    /* ─── Header ─── */
+    .header {
+      background: #2563eb;
+      color: #fff;
+      padding: 10mm 14mm;
+      margin-bottom: 10mm;
+    }
+    .header-inner-table { width: 100%; border-collapse: collapse; }
+    .header-inner-table td { vertical-align: middle; padding: 0; }
+    .avatar-cell { width: 26mm; }
+    .avatar {
+      width: 22mm;
+      height: 22mm;
+      background: #3b82f6;
+      border-radius: 50%;
+      border: 3px solid #60a5fa;
+      text-align: center;
+      line-height: 22mm;
+      font-size: 18pt;
+      font-weight: 900;
+      color: #fff;
+    }
+    .header-text-cell { padding-left: 6mm; }
+    .header h1 {
+      font-size: 22pt;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.3px;
+      line-height: 1.1;
+      margin-bottom: 3px;
+    }
+    .header h2 {
+      font-size: 10pt;
+      font-weight: 500;
+      color: #bfdbfe;
+      margin-bottom: 6px;
+    }
+    .contact-row {
+      font-size: 8.5pt;
+      color: #bfdbfe;
+    }
+    .contact-row span { margin-right: 12px; }
+    .contact-label { color: #93c5fd; font-weight: 600; }
+
+    /* ─── Body ─── */
+    .body { padding: 0 14mm; }
+
+    /* ─── Two-column (table) ─── */
+    .columns-table { width: 100%; border-collapse: collapse; }
+    .columns-table td { vertical-align: top; padding: 0; }
+    .main-cell { width: 64%; padding-right: 8mm; }
+    .side-cell { width: 36%; }
+
+    /* ─── Section title ─── */
+    .section { margin-bottom: 8mm; }
+    .section-title {
+      font-size: 13pt;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 5mm;
+      display: block;
+    }
+    .section-title-bar {
+      display: inline-block;
+      width: 4px;
+      height: 14px;
+      background: #2563eb;
+      border-radius: 2px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* ─── Summary ─── */
+    .summary-box {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 5mm 6mm;
+      margin-bottom: 5mm;
+      font-size: 10pt;
+      color: #374151;
+      font-weight: 500;
+      line-height: 1.65;
+    }
+
+    /* ─── Experience ─── */
+    .experience-item {
+      margin-bottom: 7mm;
+      padding-left: 8mm;
+      border-left: 2px solid #dbeafe;
+      position: relative;
+    }
+    .exp-dot {
+      position: absolute;
+      left: -5px;
+      top: 4px;
+      width: 8px;
+      height: 8px;
+      background: #2563eb;
+      border-radius: 50%;
+    }
+    .exp-header-table { width: 100%; border-collapse: collapse; margin-bottom: 2px; }
+    .exp-header-table td { vertical-align: middle; padding: 0; }
+    .exp-pos { font-size: 11pt; font-weight: 700; color: #0f172a; }
+    .exp-date {
+      font-size: 8pt;
+      font-weight: 700;
+      color: #2563eb;
+      background: #eff6ff;
+      padding: 1px 7px;
+      border-radius: 20px;
+      white-space: nowrap;
+      text-align: right;
+    }
+    .exp-company { font-size: 9pt; font-weight: 600; color: #475569; margin-top: 1px; }
+    .exp-location { color: #94a3b8; font-weight: 400; }
+    .item-desc { font-size: 9pt; color: #374151; margin-top: 4px; line-height: 1.55; }
+
+    /* ─── Sidebar sections ─── */
+    .side-section-title {
+      font-size: 11pt;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 5mm;
+      display: block;
+    }
+
+    /* ─── Skills ─── */
+    .skill-row {
+      background: #f1f5f9;
+      padding: 3px 10px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      font-size: 9pt;
+    }
+    .skill-row-table { width: 100%; border-collapse: collapse; }
+    .skill-row-table td { vertical-align: middle; padding: 0; }
+    .skill-name { font-weight: 700; color: #1e293b; }
+    .skill-level { font-size: 8pt; font-weight: 700; color: #2563eb; text-transform: uppercase; text-align: right; }
+
+    /* ─── Education ─── */
+    .education-item {
+      background: #eff6ff;
+      padding: 4mm 5mm;
+      border-radius: 8px;
+      border: 1px solid #bfdbfe;
+      margin-bottom: 5mm;
+    }
+    .edu-school { font-size: 9.5pt; font-weight: 700; color: #0f172a; }
+    .edu-degree { font-size: 8.5pt; font-weight: 600; color: #374151; margin-top: 2px; }
+    .edu-bottom-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    .edu-bottom-table td { vertical-align: middle; padding: 0; }
+    .edu-date { font-size: 7.5pt; color: #64748b; }
+    .edu-gpa { font-size: 7.5pt; font-weight: 700; color: #2563eb; text-align: right; }
+
+    /* ─── Languages ─── */
+    .lang-item {
+      display: block;
+      padding: 3px 0;
+      border-bottom: 1px dotted #e2e8f0;
+      font-size: 9pt;
+    }
+    .lang-name { font-weight: 700; color: #1e293b; }
+    .lang-level { font-size: 8pt; color: #64748b; background: #f1f5f9; padding: 1px 6px; border-radius: 20px; margin-left: 4px; }
+
+    /* ─── Certifications ─── */
+    .cert-name { font-size: 9pt; font-weight: 700; color: #0f172a; }
+    .cert-issuer { font-size: 8.5pt; color: #64748b; }
+    .cert-date { font-size: 8pt; color: #9ca3af; margin-bottom: 5mm; }
+
+    .empty-section { color: #9ca3af; font-size: 9pt; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <div class="header">
+      <table class="header-inner-table">
+        <tr>
+          <td class="avatar-cell">
+            <div class="avatar">{{firstLetter}}</div>
+          </td>
+          <td class="header-text-cell">
+            <h1>{{fullName}}</h1>
+            <h2>{{profession}}</h2>
+            <div class="contact-row">
+              <span><span class="contact-label">@</span> {{email}}</span>
+              <span><span class="contact-label">T:</span> {{phone}}</span>
+              <span><span class="contact-label">L:</span> {{location}}</span>
+              <span><span class="contact-label">in:</span> {{linkedin}}</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+      <table class="columns-table">
+        <tr>
+          <!-- Main col -->
+          <td class="main-cell">
+            <div class="section">
+              <span class="section-title"><span class="section-title-bar"></span>Özet</span>
+              <div class="summary-box">{{summary}}</div>
+            </div>
+
+            <div class="section">
+              <span class="section-title"><span class="section-title-bar"></span>Deneyim</span>
+              {{experienceList}}
+            </div>
+          </td>
+
+          <!-- Side col -->
+          <td class="side-cell">
+            <div class="section">
+              <span class="side-section-title"><span class="section-title-bar"></span>Yetenekler</span>
+              {{skillsList}}
+            </div>
+
+            <div class="section">
+              <span class="side-section-title"><span class="section-title-bar"></span>Eğitim</span>
+              {{educationList}}
+            </div>
+
+            <div class="section">
+              <span class="side-section-title"><span class="section-title-bar"></span>Diller</span>
+              {{languagesList}}
+            </div>
+
+            <div class="section">
+              <span class="side-section-title"><span class="section-title-bar"></span>Sertifikalar</span>
+              {{certificationsList}}
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

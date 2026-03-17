@@ -3,18 +3,18 @@ node_modules/
 .pnp
 .pnp.js
 
-# Build outputs
-frontend/dist/
-backend/CvBuilder.Api/bin/
-backend/CvBuilder.Api/obj/
+# Build and test outputs
+**/dist/
+**/bin/
+**/obj/
+**/test-results/
 
 # Environment files
-.env
-.env.local
-.env.production
-frontend/.env
-frontend/.env.local
-backend/CvBuilder.Api/appsettings.Development.json
+.env*
+!.env.example
+**/ .env*
+**/appsettings.Development.json
+**/appsettings.Local.json
 
 # IDE
 .vscode/

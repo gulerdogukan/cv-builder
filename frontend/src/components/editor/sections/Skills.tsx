@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import type { Skill, SkillLevel } from '@/types/cv.types';
+import type { Skill, SkillLevel, TemplateType } from '@/types/cv.types';
 import { generateId } from '@/lib/utils';
 import { useAI } from '@/hooks/useAI';
 
 interface Props {
   data: Skill[];
+  template: TemplateType;
+  profession?: string;
   onChange: (data: Skill[]) => void;
 }
 
@@ -22,10 +24,9 @@ const LEVEL_COLORS: Record<SkillLevel, string> = {
   expert: 'bg-green-100 text-green-700',
 };
 
-export default function Skills({ data, onChange }: Props) {
+export default function Skills({ data, profession, onChange }: Props) {
   const [newSkill, setNewSkill] = useState('');
   const [newLevel, setNewLevel] = useState<SkillLevel>('intermediate');
-  const [suggestPosition, setSuggestPosition] = useState('');
   const [showSuggest, setShowSuggest] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const { suggestSkills, isLoading: isAILoading, isRateLimited } = useAI();
@@ -48,12 +49,13 @@ export default function Skills({ data, onChange }: Props) {
   };
 
   const handleAISuggest = async () => {
-    if (!suggestPosition.trim()) return;
+    if (!profession || !profession.trim()) return;
     try {
-      const result = await suggestSkills(suggestPosition);
+      const result = await suggestSkills(profession);
       // Zaten eklenmiş olanları filtrele
       const existingNames = new Set(data.map(s => s.name.toLowerCase()));
       setSuggestions(result.filter(s => !existingNames.has(s.toLowerCase())));
+      setShowSuggest(true);
     } catch {
       // error handled in hook
     }
@@ -116,26 +118,21 @@ export default function Skills({ data, onChange }: Props) {
         </button>
 
         {showSuggest && (
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={suggestPosition}
-                onChange={(e) => setSuggestPosition(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAISuggest()}
-                placeholder="Pozisyon girin (ör: React Developer)"
-                className="flex-1 rounded-lg border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-              />
+          <div className="space-y-2 pt-2 border-t border-primary/10">
+            <div className="flex gap-2 items-center text-sm">
+              <span className="text-muted-foreground">Seçili Unvan:</span>
+              <span className="font-semibold text-foreground">{profession || "Belirtilmedi"}</span>
               <button
                 type="button"
                 onClick={handleAISuggest}
-                disabled={isAILoading || !suggestPosition.trim() || isRateLimited}
-                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center gap-1"
+                disabled={isAILoading || !profession || !profession.trim() || isRateLimited}
+                className="ml-auto rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center gap-1.5"
+                title={!profession ? "Önce Kişisel Bilgiler'den Unvan girin" : "Önerileri Yenile"}
               >
                 {isAILoading ? (
                   <span className="animate-spin rounded-full h-3 w-3 border-b border-white" />
                 ) : '✨'}
-                {isRateLimited ? 'Limit doldu' : 'Öner'}
+                Önerileri Getir
               </button>
             </div>
 

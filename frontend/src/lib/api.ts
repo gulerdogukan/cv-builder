@@ -22,11 +22,17 @@ api.interceptors.request.use(async (config) => {
 // Response interceptor — hata yönetimi
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      // Token expired — redirect to login, preserving current path for post-login return
-      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.href = `/login?returnUrl=${returnUrl}`;
+      // Supabase session'ı hâlâ geçerliyse backend problemidir, redirect yapma
+      // (Backend JWT validator hatası gibi geçici sorunlar sonsuz döngüye yol açmamalı)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Gerçekten oturum kapanmış → login'e yönlendir
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/login?returnUrl=${returnUrl}`;
+      }
+      // Session geçerliyse sadece hataı fırlat, redirect yapma
     }
     return Promise.reject(error);
   }

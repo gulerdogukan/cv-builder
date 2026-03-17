@@ -1,0 +1,8 @@
+node_modules
+test.pdf
+.env
+.vscode
+.git
+README.md
+Dockerfile
+railway.toml

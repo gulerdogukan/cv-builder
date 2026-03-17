@@ -27,7 +27,7 @@ RUN groupadd --system pptruser && \
 USER pptruser
 
 COPY --chown=pptruser:pptruser package.json package-lock.json* ./
-RUN npm ci --only=production
+RUN npm install --only=production
 
 COPY --chown=pptruser:pptruser . .
 

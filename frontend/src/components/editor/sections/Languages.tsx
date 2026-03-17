@@ -1,9 +1,10 @@
-import type { Language, LanguageLevel } from '@/types/cv.types';
+import type { Language, LanguageLevel, TemplateType } from '@/types/cv.types';
 import { generateId } from '@/lib/utils';
 import { useState } from 'react';
 
 interface Props {
   data: Language[];
+  template: TemplateType;
   onChange: (data: Language[]) => void;
 }
 

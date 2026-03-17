@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { Certification } from '@/types/cv.types';
+import type { Certification, TemplateType } from '@/types/cv.types';
 import { generateId } from '@/lib/utils';
 
 interface Props {
   data: Certification[];
+  template: TemplateType;
   onChange: (data: Certification[]) => void;
 }
 

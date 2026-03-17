@@ -44,23 +44,55 @@ public static class PdfEndpoints
             if (cv == null) return Results.NotFound();
 
             // Sections → CVData JSON oluştur
-            var dataDict = cv.Sections
-                .OrderBy(s => s.SortOrder)
-                .ToDictionary(
-                    s => s.SectionType.ToString().ToLower(),
-                    s => (object)(s.Content ?? "{}"));
+            // Content is stored as a JSON string in the DB (jsonb column mapped to string).
+            // We must deserialize each section's Content into a JsonElement before re-serializing,
+            // otherwise the PDF service receives escaped strings instead of nested objects.
+            var dataDict = new Dictionary<string, System.Text.Json.JsonElement>();
+            foreach (var section in cv.Sections.OrderBy(s => s.SortOrder))
+            {
+                var key = section.SectionType.ToString().ToLower();
+                try
+                {
+                    var element = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(
+                        section.Content ?? "{}");
+                    dataDict[key] = element;
+                }
+                catch
+                {
+                    // Fallback to empty object if content is malformed
+                    dataDict[key] = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{}");
+                }
+            }
 
             var cvDataJson = System.Text.Json.JsonSerializer.Serialize(dataDict);
+
+            // PDF servisinin desteklediği template adlarına map et
+            // (frontend farklı template isimleri kullanıyor olabilir)
+            var pdfTemplate = cv.Template?.ToLower() switch
+            {
+                "classic"          => "classic",
+                "minimal"          => "minimal",
+                "minimalist"       => "minimal",
+                "modernist"        => "modern",
+                "executive"        => "classic",
+                "creative-canvas"  => "creative-canvas",
+                "creative_canvas"  => "creative-canvas",
+                "creativecanvas"   => "creative-canvas",
+                "startup"          => "startup",
+                _                  => "modern",
+            };
 
             // PDF oluştur
             byte[] pdfBytes;
             try
             {
-                pdfBytes = await pdfService.GeneratePdfAsync(cv.Template, cvDataJson);
+                pdfBytes = await pdfService.GeneratePdfAsync(pdfTemplate, cvDataJson);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return Results.Json(new { error = ex.Message }, statusCode: 503);
+                // InvalidOperationException = bilinen PDF servis hatası
+                // Diğer exception'lar (JsonException, HttpRequestException, vb.) → 503
+                return Results.Json(new { error = ex.Message, code = "PDF_ERROR" }, statusCode: 503);
             }
 
             // Dosya adı: "cv-title-date.pdf"
