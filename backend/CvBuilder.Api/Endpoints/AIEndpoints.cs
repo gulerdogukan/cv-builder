@@ -57,36 +57,32 @@ public static class AIEndpoints
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
                     statusCode: 429);
 
-            // CvDataJson varsa direkt kullan, yoksa CvId ile DB'den çek
-            string cvDataJson = request.CvDataJson ?? "";
-            if (string.IsNullOrEmpty(cvDataJson) && !string.IsNullOrEmpty(request.CvId))
+            // CV ID varsa veriyi ve güncelleme için nesneyi tek seferde çek
+            CV? cv = null;
+            if (Guid.TryParse(request.CvId, out var cvGuid))
             {
-                if (Guid.TryParse(request.CvId, out var cvGuid))
-                {
-                    var cv = await db.CVs
-                        .Include(c => c.Sections)
-                        .FirstOrDefaultAsync(c => c.Id == cvGuid && c.UserId == userId.Value);
-                    if (cv != null)
-                    {
-                        var dataDict = cv.Sections.ToDictionary(
-                            s => s.SectionType.ToString().ToLower(),
-                            s => (object)(s.Content ?? "{}"));
-                        cvDataJson = System.Text.Json.JsonSerializer.Serialize(dataDict);
-                    }
-                }
+                cv = await db.CVs
+                    .Include(c => c.Sections)
+                    .FirstOrDefaultAsync(c => c.Id == cvGuid && c.UserId == userId.Value);
+            }
+
+            // CvDataJson yoksa DB'den gelen CV içeriğinden oluştur
+            string cvDataJson = request.CvDataJson ?? "";
+            if (string.IsNullOrEmpty(cvDataJson) && cv != null)
+            {
+                var dataDict = cv.Sections.ToDictionary(
+                    s => s.SectionType.ToString().ToLower(),
+                    s => (object)(s.Content ?? "{}"));
+                cvDataJson = System.Text.Json.JsonSerializer.Serialize(dataDict);
             }
 
             var (score, readability, keyword, completeness, impact, suggestions) = await aiService.CalculateATSScoreAsync(cvDataJson);
 
-            // ATS skorunu CV kaydına yaz
-            if (!string.IsNullOrEmpty(request.CvId) && Guid.TryParse(request.CvId, out var scoreGuid))
+            // ATS skorunu çekilen nesne üzerinden güncelle (tekrar sorgu yapmadan)
+            if (cv != null)
             {
-                var cv = await db.CVs.FirstOrDefaultAsync(c => c.Id == scoreGuid && c.UserId == userId.Value);
-                if (cv != null)
-                {
-                    cv.AtsScore = score;
-                    await db.SaveChangesAsync();
-                }
+                cv.AtsScore = score;
+                await db.SaveChangesAsync();
             }
 
             return Results.Ok(new ATSScoreResponse(score, readability, keyword, completeness, impact, suggestions)
@@ -146,8 +142,10 @@ public static class AIEndpoints
             LinkedInImportRequest request,
             IAIService aiService,
             AppDbContext db,
-            HttpContext ctx) =>
+            HttpContext ctx,
+            ILoggerFactory loggerFactory) =>
         {
+            var logger = loggerFactory.CreateLogger("AIEndpoints");
             var userId = ctx.GetUserId();
             if (userId is null) return Results.Unauthorized();
 
@@ -165,8 +163,9 @@ public static class AIEndpoints
                 var cvDataJson = await aiService.ImportLinkedInAsync(request.ProfileText);
                 return Results.Ok(new LinkedInImportResponse { CvDataJson = cvDataJson, RemainingRequests = rateLimitResult.Remaining });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logger.LogError(ex, "LinkedIn import hatası (User: {UserId})", userId);
                 return Results.Problem("LinkedIn profili işlenirken bir hata oluştu.");
             }
         });
@@ -176,8 +175,10 @@ public static class AIEndpoints
             IFormFile file,
             IAIService aiService,
             AppDbContext db,
-            HttpContext ctx) =>
+            HttpContext ctx,
+            ILoggerFactory loggerFactory) =>
         {
+            var logger = loggerFactory.CreateLogger("AIEndpoints");
             var userId = ctx.GetUserId();
             if (userId is null) return Results.Unauthorized();
 
@@ -187,25 +188,30 @@ public static class AIEndpoints
             if (file.ContentType != "application/pdf")
                 return Results.BadRequest(new { error = "Sadece PDF formatı desteklenmektedir." });
 
+            const long MaxFileSize = 10 * 1024 * 1024; // 10MB limit
+            if (file.Length > MaxFileSize)
+                return Results.BadRequest(new { error = "Dosya boyutu 10MB'dan büyük olamaz." });
+
             var rateLimitResult = await CheckAndIncrementRateLimit(db, userId.Value);
             if (!rateLimitResult.Allowed)
                 return Results.Json(
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
                     statusCode: 429);
 
-            try
-            {
-                string rawText = "";
-                using (var stream = file.OpenReadStream())
-                using (var document = PdfDocument.Open(stream))
+                try
                 {
-                    foreach (var page in document.GetPages())
+                    var sb = new System.Text.StringBuilder();
+                    using (var stream = file.OpenReadStream())
+                    using (var document = PdfDocument.Open(stream))
                     {
-                        rawText += page.Text + "\n";
+                        foreach (var page in document.GetPages())
+                        {
+                            sb.AppendLine(page.Text);
+                        }
                     }
-                }
 
-                var parsedJsonResult = await aiService.ParsePdfToCvDataAsync(rawText);
+                    var rawText = sb.ToString();
+                    var parsedJsonResult = await aiService.ParsePdfToCvDataAsync(rawText);
 
                 return Results.Ok(new 
                 { 
@@ -216,6 +222,7 @@ public static class AIEndpoints
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "PDF import hatası (User: {UserId})", userId);
                 return Results.Problem(detail: ex.Message, title: "PDF okuma veya AI dönüştürme hatası");
             }
         }).DisableAntiforgery();

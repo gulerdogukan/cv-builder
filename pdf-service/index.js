@@ -24,10 +24,27 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 
+// ── Auth middleware ────────────────────────────────────────────────────────
+const authMiddleware = (req, res, next) => {
+  const secret = process.env.INTERNAL_SECRET;
+  if (!secret) {
+    console.warn('WARNING: INTERNAL_SECRET is not set. PDF generation is unprotected.');
+    return next();
+  }
+  
+  const incomingSecret = req.headers['x-internal-secret'];
+  if (incomingSecret !== secret) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid internal secret' });
+  }
+  next();
+};
+
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+
+app.use('/generate', authMiddleware);
 
 // ── PDF generation ────────────────────────────────────────────────────────────
 app.post('/generate', async (req, res) => {

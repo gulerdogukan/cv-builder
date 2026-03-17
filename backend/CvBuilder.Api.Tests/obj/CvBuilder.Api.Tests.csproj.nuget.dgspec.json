@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/src/CvBuilder.Api.Tests/CvBuilder.Api.Tests.csproj": {}
+    "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj": {}
   },
   "projects": {
-    "/src/CvBuilder.Api.Tests/CvBuilder.Api.Tests.csproj": {
+    "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/src/CvBuilder.Api.Tests/CvBuilder.Api.Tests.csproj",
+        "projectUniqueName": "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
         "projectName": "CvBuilder.Api.Tests",
-        "projectPath": "/src/CvBuilder.Api.Tests/CvBuilder.Api.Tests.csproj",
-        "packagesPath": "/root/.nuget/packages/",
-        "outputPath": "/src/CvBuilder.Api.Tests/obj/",
+        "projectPath": "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
+        "packagesPath": "C:\\Users\\DOU\\.nuget\\packages\\",
+        "outputPath": "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/root/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\DOU\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -26,8 +26,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "/src/CvBuilder.Api/CvBuilder.Api.csproj": {
-                "projectPath": "/src/CvBuilder.Api/CvBuilder.Api.csproj"
+              "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api\\CvBuilder.Api.csproj": {
+                "projectPath": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api\\CvBuilder.Api.csproj"
               }
             }
           }
@@ -92,21 +92,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.419/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.418/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "/src/CvBuilder.Api/CvBuilder.Api.csproj": {
+    "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api\\CvBuilder.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/src/CvBuilder.Api/CvBuilder.Api.csproj",
+        "projectUniqueName": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api\\CvBuilder.Api.csproj",
         "projectName": "CvBuilder.Api",
-        "projectPath": "/src/CvBuilder.Api/CvBuilder.Api.csproj",
-        "packagesPath": "/root/.nuget/packages/",
-        "outputPath": "/src/CvBuilder.Api/obj/",
+        "projectPath": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api\\CvBuilder.Api.csproj",
+        "packagesPath": "C:\\Users\\DOU\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/root/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\DOU\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -155,6 +155,10 @@
               "target": "Package",
               "version": "[8.0.11, )"
             },
+            "PdfPig": {
+              "target": "Package",
+              "version": "[0.1.13, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.9.0, )"
@@ -179,7 +183,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.419/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.418/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

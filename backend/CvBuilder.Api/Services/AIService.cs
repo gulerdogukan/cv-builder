@@ -555,11 +555,12 @@ public class AIService : IAIService
 
     private static (int Score, int Readability, int Keyword, int Completeness, int Impact, List<string> Suggestions) FallbackAtsScore(string cvDataJson)
     {
-        int score = 20;
-        int comp = 20;
-        int kWord = 20;
-        int imp = 20;
-        int read = 40;
+        // Tüm metrikler için 20 puanlık bir taban skor ile başlıyoruz (CV varlığı için).
+        // Bu yaklaşım, asimetriyi giderir ve mantıklı bir başlangıç noktası sağlar.
+        int comp  = 20; // Doluluk
+        int kWord = 20; // Anahtar Kelime
+        int imp   = 20; // Etki
+        int read  = 20; // Okunabilirlik
 
         var suggestions = new List<string>();
 
@@ -568,57 +569,78 @@ public class AIService : IAIService
             var doc  = JsonDocument.Parse(cvDataJson);
             var root = doc.RootElement;
 
+            // 1. Doluluk (Completeness) Analizi
             if (root.TryGetProperty("personal", out var personal))
             {
-                if (HasValue(personal, "email"))    comp += 20;
-                if (HasValue(personal, "phone"))    comp += 20;
-                if (HasValue(personal, "location")) comp += 20;
+                if (HasValue(personal, "email"))    comp += 15;
+                if (HasValue(personal, "phone"))    comp += 15;
+                if (HasValue(personal, "location")) { comp += 15; read += 10; }
                 else suggestions.Add("Konum bilgisi ekleyin");
             }
 
-            if (root.TryGetProperty("summary", out var summary) &&
-                (summary.GetString()?.Length ?? 0) > 50)
-                {
-                    kWord += 20;
-                    read += 20;
-                }
-            else
-                suggestions.Add("Güçlü bir özet bölümü ekleyin (en az 50 karakter)");
-
-            if (root.TryGetProperty("experience", out var exp) && exp.GetArrayLength() > 0)
+            // 2. Özet ve Anahtar Kelime Analizi
+            if (root.TryGetProperty("summary", out var summary) && (summary.GetString()?.Length ?? 0) > 50)
             {
-                comp += 20;
-                var hasDesc = exp.EnumerateArray()
-                    .Any(e => HasValue(e, "description") &&
-                              (e.GetProperty("description").GetString()?.Length ?? 0) > 30);
-                if (hasDesc) {
-                    imp += 40;
-                    kWord += 20;
-                }
-                else suggestions.Add("Deneyim açıklamalarına aksiyon fiilleri ve metrikler ekleyin");
+                kWord += 20;
+                read  += 20;
+                imp   += 10;
             }
             else
-                suggestions.Add("En az bir deneyim girişi ekleyin");
+            {
+                suggestions.Add("Güçlü bir özet bölümü ekleyin (en az 50 karakter)");
+            }
 
+            // 3. Deneyim ve Etki Analizi
+            if (root.TryGetProperty("experience", out var exp) && exp.GetArrayLength() > 0)
+            {
+                comp += 15;
+                read += 20;
+                var hasDesc = exp.EnumerateArray()
+                    .Any(e => HasValue(e, "description") && (e.GetProperty("description").GetString()?.Length ?? 0) > 30);
+                
+                if (hasDesc) 
+                {
+                    imp   += 40;
+                    kWord += 20;
+                }
+                else 
+                {
+                    suggestions.Add("Deneyim açıklamalarına aksiyon fiilleri ve metrikler ekleyin");
+                }
+            }
+            else
+            {
+                suggestions.Add("En az bir deneyim girişi ekleyin");
+            }
+
+            // 4. Yetenekler Analizi
             if (root.TryGetProperty("skills", out var skillsEl))
             {
                 var count = skillsEl.GetArrayLength();
-                if (count >= 5)      kWord += 40;
-                else if (count > 0)  kWord += 20;
+                if (count >= 5)      { kWord += 40; comp += 10; }
+                else if (count > 0)  { kWord += 20; comp += 5;  }
                 else                 suggestions.Add("En az 5 beceri ekleyin");
             }
 
+            // 5. Eğitim Analizi
             if (root.TryGetProperty("education", out var edu) && edu.GetArrayLength() > 0)
-                comp += 20;
+            {
+                comp += 15;
+                read += 20;
+                imp  += 10;
+            }
             else
+            {
                 suggestions.Add("Eğitim bilgilerini ekleyin");
+            }
         }
-        catch { /* JSON parse hatası */ }
+        catch { /* JSON parse hatası durumunda taban skorlar döner */ }
 
         if (suggestions.Count == 0)
             suggestions.Add("CV'nizi daha da güçlendirmek için özet bölümünü genişletin");
 
-        score = (comp + kWord + imp + read) / 4;
+        // Toplam skor, tüm metriklerin ortalamasıdır.
+        int score = (comp + kWord + imp + read) / 4;
 
         return (
             Math.Clamp(score, 0, 100), 

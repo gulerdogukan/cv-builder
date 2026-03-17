@@ -66,16 +66,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             plan: 'free',
             createdAt: session.user.created_at,
           },
-          isAuthenticated: true,
-          isLoading: false,
         });
 
         // Backend ile senkronize et (plan bilgisi vb.)
-        get().syncUserWithBackend();
+        await get().syncUserWithBackend();
+        
+        set({ isAuthenticated: true, isLoading: false });
       } else {
         set({ user: null, isAuthenticated: false, isLoading: false });
       }
-    } catch {
+    } catch (error) {
+      console.error('Auth initialization error:', error);
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
 
@@ -99,7 +100,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
         // SIGNED_IN ve TOKEN_REFRESHED olaylarında backend ile senkronize et
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          get().syncUserWithBackend();
+          get().syncUserWithBackend().catch(err => 
+            console.error('Background sync failed:', err)
+          );
         }
       } else {
         set({ user: null, isAuthenticated: false, isLoading: false });

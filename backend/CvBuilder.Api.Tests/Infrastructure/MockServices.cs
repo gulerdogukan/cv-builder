@@ -14,11 +14,29 @@ public class MockAIService : IAIService
     public Task<string> EnhanceTextAsync(string text)
         => Task.FromResult($"[ENHANCED] {text}");
 
-    public Task<(int Score, List<string> Suggestions)> CalculateATSScoreAsync(string cvDataJson)
-        => Task.FromResult((78, new List<string> { "Add measurable achievements", "Include relevant keywords" }));
+    public Task<(int Score, int Readability, int Keyword, int Completeness, int Impact, List<string> Suggestions)> CalculateATSScoreAsync(string cvDataJson)
+        => Task.FromResult((78, 80, 75, 90, 70, new List<string> { "Add measurable achievements", "Include relevant keywords" }));
 
     public Task<List<string>> SuggestSkillsAsync(string position)
         => Task.FromResult(new List<string> { "C#", "SQL", "Docker" });
+
+    public Task<List<string>> GenerateSummaryAsync(string cvDataJson, string? targetPosition = null, string? targetDescription = null)
+        => Task.FromResult(new List<string> { "Summary 1", "Summary 2", "Summary 3" });
+
+    public Task<string> ParsePdfToCvDataAsync(string rawText)
+        => Task.FromResult("{}");
+
+    public Task<string> ImportLinkedInAsync(string profileText)
+        => Task.FromResult("{}");
+
+    public Task<string> GenerateCoverLetterAsync(string cvDataJson, string jobDescription)
+        => Task.FromResult("Mock Cover Letter content.");
+
+    public Task<(int MatchScore, List<string> MatchingSkills, List<string> MissingSkills, string Advice)> MatchJobAsync(string cvDataJson, string jobDescription)
+        => Task.FromResult((85, new List<string> { "C#", "SQL" }, new List<string> { "Docker" }, "Mock advice."));
+
+    public Task<string> BulletizeDescriptionAsync(string description, string? jobTitle = null)
+        => Task.FromResult("• Item 1\n• Item 2");
 }
 
 /// <summary>

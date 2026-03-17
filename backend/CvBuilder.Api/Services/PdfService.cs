@@ -7,12 +7,14 @@ public class PdfService : IPdfService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _pdfServiceUrl;
+    private readonly string _internalSecret;
     private readonly ILogger<PdfService> _logger;
 
     public PdfService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<PdfService> logger)
     {
         _httpClientFactory = httpClientFactory;
         _pdfServiceUrl = configuration["PdfService:BaseUrl"] ?? "http://localhost:3001";
+        _internalSecret = configuration["InternalSecret"] ?? "";
         _logger = logger;
     }
 
@@ -35,7 +37,12 @@ public class PdfService : IPdfService
         HttpResponseMessage response;
         try
         {
-            response = await client.PostAsync($"{_pdfServiceUrl}/generate", content);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{_pdfServiceUrl}/generate")
+            {
+                Content = content
+            };
+            request.Headers.Add("X-Internal-Secret", _internalSecret);
+            response = await client.SendAsync(request);
         }
         catch (Exception ex)
         {
