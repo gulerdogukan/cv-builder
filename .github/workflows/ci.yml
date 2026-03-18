@@ -71,11 +71,17 @@ jobs:
 
       - name: Test
         run: |
-          if [ -d "CvBuilder.Tests" ]; then
+          if [ -d "CvBuilder.Api.Tests" ]; then
             dotnet test --no-build --verbosity normal
           else
-            echo "No test project found, skipping."
+            echo "No test project found (CvBuilder.Api.Tests), skipping."
           fi
+        env:
+          # CI için sahte değerler — entegrasyon testleri dışı testler geçmeli
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=cvbuilder_test;Username=postgres;Password=postgres"
+          Supabase__Url: "https://ci-placeholder.supabase.co"
+          Gemini__ApiKey: "ci-placeholder-key"
+          InternalSecret: "ci-placeholder-internal-secret-32chars"
 
   # ─── PDF Service ────────────────────────────────────────────────────────────
   pdf-service:

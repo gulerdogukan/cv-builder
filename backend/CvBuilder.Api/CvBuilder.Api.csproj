@@ -12,7 +12,7 @@
     <PackageReference Include="PdfPig" Version="0.1.13" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
-    <PackageReference Include="Anthropic.SDK" Version="3.2.0" />
+    <!-- Anthropic.SDK kaldırıldı — Gemini REST API HttpClient ile çağrılıyor (paket gerektirmez) -->
     <PackageReference Include="Iyzipay" Version="2.1.54" />
   </ItemGroup>
 

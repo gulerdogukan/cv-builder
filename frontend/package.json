@@ -14,7 +14,10 @@
     "test:e2e:auth": "playwright test e2e/tests/auth.spec.ts",
     "test:e2e:dashboard": "playwright test e2e/tests/dashboard.spec.ts",
     "test:e2e:editor": "playwright test e2e/tests/editor.spec.ts",
-    "test:e2e:pricing": "playwright test e2e/tests/pricing.spec.ts"
+    "test:e2e:pricing": "playwright test e2e/tests/pricing.spec.ts",
+    "test:api": "playwright test --config=playwright.api.config.ts",
+    "test:api:ui": "playwright test --config=playwright.api.config.ts --ui",
+    "test:api:debug": "playwright test --config=playwright.api.config.ts --debug"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.2",

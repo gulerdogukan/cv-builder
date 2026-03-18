@@ -15,7 +15,7 @@ type ViewMode = 'editor' | 'preview' | 'split';
 export default function Editor() {
   useSEO({ title: 'CV Düzenle', noIndex: true });
   const { id } = useParams<{ id: string }>();
-  const { currentCV, fetchCV, updateCVTitle, setTemplate, togglePublic, isLoading } = useCV();
+  const { currentCV, fetchCV, updateCVTitle, setTemplate, togglePublic, isLoading, setAccentColor, setFontFamily } = useCV();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const { isDark, toggle } = useTheme();
@@ -251,7 +251,7 @@ export default function Editor() {
               <button
                 onClick={handleCopyLink}
                 className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-primary transition-colors"
-                title="Linh Kopyala"
+                title="Link Kopyala"
               >
                 {copied ? <Check className="w-3 h-3 text-green-600" /> : <Link2 className="w-3 h-3" />}
               </button>
@@ -332,17 +332,72 @@ export default function Editor() {
         {(viewMode === 'preview' || viewMode === 'split') && (
           <div className={`flex flex-col overflow-hidden ${viewMode === 'split' ? 'w-1/2' : 'w-full'} bg-gray-100`}>
             {/* no-print: hide preview header bar */}
-            <div className="no-print px-4 py-2 bg-card border-b flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Canlı Önizleme</span>
-              <span className="text-xs text-muted-foreground capitalize">{currentCV.template} şablonu</span>
+            <div className="no-print h-11 px-4 bg-card border-b flex items-center justify-between gap-4 shrink-0">
+              <span className="text-xs font-semibold text-muted-foreground shrink-0 uppercase tracking-widest">Önizleme</span>
+              
+              {/* Ortadaki Renk ve Font Ayarları */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5 bg-muted/40 p-1 rounded-full border border-border">
+                  {[
+                    { name: 'Mavi', value: '#3b82f6' },
+                    { name: 'Lacivert', value: '#1e3a8a' },
+                    { name: 'Zümrüt', value: '#10b981' },
+                    { name: 'Gül', value: '#e11d48' },
+                    { name: 'Turuncu', value: '#f59e0b' },
+                    { name: 'Mor', value: '#8b5cf6' },
+                    { name: 'Kömür', value: '#374151' },
+                  ].map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => setAccentColor(c.value)}
+                      className="w-4 h-4 rounded-full border border-white dark:border-slate-800 shadow-sm transition-transform hover:scale-125 flex items-center justify-center overflow-hidden shrink-0"
+                      style={{ backgroundColor: c.value }}
+                    >
+                      {currentCV?.accentColor === c.value && <Check className="w-2.5 h-2.5 text-white" />}
+                    </button>
+                  ))}
+                  <div className="w-px h-3 bg-border mx-0.5" />
+                  <div className="relative w-4 h-4 group">
+                    <input
+                      type="color"
+                      value={currentCV?.accentColor || '#3b82f6'}
+                      onChange={(e) => setAccentColor(e.target.value)}
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
+                    />
+                    <div className="w-4 h-4 rounded-full border border-dashed border-muted-foreground flex items-center justify-center bg-background group-hover:bg-muted transition-colors overflow-hidden">
+                       <span className="text-[8px] font-bold text-muted-foreground">+</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 bg-muted/40 px-3 py-1 rounded-full border border-border shrink-0">
+                  <select
+                    value={currentCV?.fontFamily || 'Inter, system-ui, sans-serif'}
+                    onChange={(e) => setFontFamily(e.target.value)}
+                    className="bg-transparent text-[10px] font-bold text-foreground focus:outline-none cursor-pointer uppercase tracking-tight"
+                  >
+                    {[
+                      { name: 'Inter', value: 'Inter, system-ui, sans-serif' },
+                      { name: 'Roboto', value: 'Roboto, sans-serif' },
+                      { name: 'Merriweather', value: 'Merriweather, serif' },
+                      { name: 'Outfit', value: 'Outfit, sans-serif' },
+                      { name: 'Playfair', value: 'Playfair Display, serif' },
+                    ].map((f) => (
+                      <option key={f.value} value={f.value} className="bg-card text-foreground">{f.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider shrink-0 font-bold">{currentCV?.template} ŞABLONU</span>
             </div>
             <div className="flex-1 overflow-hidden">
               <CVPreview
                 data={cvData}
-                template={currentCV.template}
-                accentColor={currentCV.accentColor}
-                fontFamily={currentCV.fontFamily}
-                atsScore={currentCV.atsScore}
+                template={currentCV?.template || 'minimalist'}
+                accentColor={currentCV?.accentColor}
+                fontFamily={currentCV?.fontFamily}
+                atsScore={currentCV?.atsScore}
               />
             </div>
           </div>

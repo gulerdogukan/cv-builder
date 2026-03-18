@@ -35,16 +35,17 @@ services:
     container_name: cvbuilder-api
     restart: unless-stopped
     working_dir: /src/CvBuilder.Api
-    command: sh -c "dotnet restore && dotnet watch run --urls http://+:5000 --no-hot-reload"
+    command: sh -c "dotnet restore && dotnet watch run --urls http://+:5001 --no-hot-reload"
     volumes:
       - ./backend:/src
       - dotnet-packages:/root/.nuget/packages
     ports:
-      - "5000:5000"
+      - "5001:5001"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5000
-      - PORT=5000
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - ASPNETCORE_URLS=http://+:5001
+      - PORT=5001
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=cvbuilder;Username=postgres;Password=postgres
       - PdfService__BaseUrl=http://pdf-service:3001
       - App__FrontendUrl=http://localhost:5173
@@ -53,9 +54,12 @@ services:
       - Supabase__Url=${SUPABASE_URL}
       - Supabase__JwtSecret=${SUPABASE_JWT_SECRET}
       - Supabase__WebhookSecret=${SUPABASE_WEBHOOK_SECRET:-dev-webhook-secret}
-      - Anthropic__ApiKey=${ANTHROPIC_API_KEY}
+      - Gemini__ApiKey=${GEMINI_API_KEY}
+      - Gemini__FlashModel=${GEMINI_FLASH_MODEL:-gemini-2.5-flash}
+      - Gemini__LiteModel=${GEMINI_LITE_MODEL:-gemini-2.5-flash-lite}
       - Iyzico__ApiKey=${IYZICO_API_KEY:-}
       - Iyzico__SecretKey=${IYZICO_SECRET_KEY:-}
+      - InternalSecret=${INTERNAL_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,7 +79,7 @@ services:
     environment:
       # Windows'ta Docker volume mount üzerinde Vite HMR için polling gerekli
       - CHOKIDAR_USEPOLLING=true
-      - VITE_API_BASE_URL=http://localhost:5000
+      - VITE_API_BASE_URL=http://localhost:5001
       - VITE_PDF_SERVICE_URL=http://localhost:3001
       - VITE_SUPABASE_URL=${SUPABASE_URL}
       - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
@@ -92,7 +96,7 @@ services:
     environment:
       - PORT=3001
       - NODE_ENV=development
-      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5000
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5001
 
 volumes:
   pgdata:

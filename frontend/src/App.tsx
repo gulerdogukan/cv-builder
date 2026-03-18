@@ -12,6 +12,8 @@ import PaymentResult from './pages/PaymentResult';
 import AuthCallback from './pages/AuthCallback';
 import PublicCVPage from './pages/PublicCVPage';
 import ScrollToTop from '@/components/ui/ScrollToTop';
+import ToastContainer from '@/components/ui/ToastContainer';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 function App() {
   const initialize = useAuthStore((s) => s.initialize);
@@ -24,6 +26,8 @@ function App() {
   return (
     <>
       <ScrollToTop />
+      <ToastContainer />
+      <ConfirmDialog />
       <Routes>
         {/* Herkese açık sayfalar */}
         <Route path="/" element={<Landing />} />

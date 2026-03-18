@@ -1,4 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
+using System.Text;
 using CvBuilder.Api.Data;
 using CvBuilder.Api.Middleware;
 using CvBuilder.Api.Models;
@@ -86,7 +88,16 @@ public static class AuthEndpoints
             }
 
             var authHeader = context.Request.Headers["x-webhook-secret"].ToString();
-            if (authHeader != webhookSecret)
+
+            // GÜVENLİK FIX #4: Timing attack'a karşı sabit zamanlı karşılaştırma.
+            // Düz "!=" kullanımı, string uzunluğuna göre değişen yanıt süresinden
+            // secretKey bilgisini sızdırabilir (timing side-channel attack).
+            // Her iki dizi aynı uzunluğa pad edilmeli — farklı boyutlu diziler
+            // FixedTimeEquals'ı anında false döndürür (timing bilgisi sızdırır).
+            var maxLen     = Math.Max(authHeader.Length, webhookSecret.Length);
+            var headerBytes = Encoding.UTF8.GetBytes(authHeader.PadRight(maxLen));
+            var secretBytes = Encoding.UTF8.GetBytes(webhookSecret.PadRight(maxLen));
+            if (!CryptographicOperations.FixedTimeEquals(headerBytes, secretBytes))
                 return Results.Unauthorized();
 
             var payload = await context.Request.ReadFromJsonAsync<SupabaseWebhookPayload>();

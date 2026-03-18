@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj": {}
+    "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj": {}
   },
   "projects": {
-    "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj": {
+    "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
+        "projectUniqueName": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
         "projectName": "CvBuilder.Api.Tests",
-        "projectPath": "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
+        "projectPath": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
         "packagesPath": "C:\\Users\\DOU\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\obj\\",
+        "outputPath": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\DOU\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -135,10 +135,6 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
-            "Anthropic.SDK": {
-              "target": "Package",
-              "version": "[3.2.0, )"
-            },
             "Iyzipay": {
               "target": "Package",
               "version": "[2.1.54, )"

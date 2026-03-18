@@ -8,11 +8,11 @@ export default function TechFocusTemplate({ data }: Props) {
   const { personal, summary, experience, education, skills, languages, certifications } = data;
 
   return (
-    <div className="p-10 font-mono text-gray-800 leading-relaxed max-w-4xl mx-auto bg-white min-h-[297mm]">
+    <div className="p-10 font-mono text-gray-800 leading-relaxed max-w-4xl mx-auto bg-white min-h-[297mm]" style={{ fontFamily: 'var(--cv-font)' }}>
       {/* Header */}
-      <header className="mb-8 border-b-2 border-slate-900 pb-6 flex items-end justify-between">
+      <header className="mb-8 border-b-2 pb-6 flex items-end justify-between" style={{ borderColor: 'var(--cv-accent)' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-tighter text-slate-900 mb-1">
+          <h1 className="text-4xl font-bold tracking-tighter mb-1" style={{ color: 'var(--cv-accent)' }}>
             {personal.fullName || 'Ad Soyad'}
           </h1>
           <h2 className="text-lg text-slate-500">{personal.profession || 'Yazılım Geliştirici'}</h2>
@@ -22,12 +22,12 @@ export default function TechFocusTemplate({ data }: Props) {
           {personal.phone && <div>{personal.phone}</div>}
           {personal.location && <div>{personal.location}</div>}
           {personal.github && (
-            <a href={`https://${personal.github}`} className="font-semibold text-slate-900 hover:underline flex items-center gap-1">
+            <a href={`https://${personal.github}`} className="font-semibold hover:underline flex items-center gap-1" style={{ color: 'var(--cv-accent)' }}>
               github.com/{personal.github.split('/').pop()} ✓
             </a>
           )}
           {personal.linkedin && (
-            <a href={`https://${personal.linkedin}`} className="text-slate-900 hover:underline">
+            <a href={`https://${personal.linkedin}`} className="hover:underline" style={{ color: 'var(--cv-accent)' }}>
               {personal.linkedin}
             </a>
           )}
@@ -37,7 +37,7 @@ export default function TechFocusTemplate({ data }: Props) {
       {/* Summary */}
       {summary && (
         <section className="mb-8">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 block border-b border-slate-200 pb-1">
+          <h3 className="text-sm font-bold uppercase tracking-widest mb-3 block border-b border-slate-200 pb-1" style={{ color: 'var(--cv-accent)', opacity: 0.6 }}>
             &gt; /özet
           </h3>
           <p className="text-sm text-slate-700 leading-loose">
@@ -49,12 +49,12 @@ export default function TechFocusTemplate({ data }: Props) {
       {/* Experience */}
       {experience.length > 0 && (
         <section className="mb-8">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4 block border-b border-slate-200 pb-1">
+          <h3 className="text-sm font-bold uppercase tracking-widest mb-4 block border-b border-slate-200 pb-1" style={{ color: 'var(--cv-accent)', opacity: 0.6 }}>
             &gt; /deneyimler
           </h3>
           <div className="space-y-6">
             {experience.map((exp) => (
-              <div key={exp.id} className="relative pl-4 border-l-2 border-slate-200 hover:border-slate-800 transition-colors">
+              <div key={exp.id} className="relative pl-4 border-l-2 border-slate-200 hover:border-slate-800 transition-colors" style={{ borderColor: 'var(--cv-accent)' }}>
                 <div className="flex justify-between items-start mb-1">
                   <div>
                     <h4 className="text-base font-bold text-slate-900">{exp.position}</h4>
@@ -83,12 +83,12 @@ export default function TechFocusTemplate({ data }: Props) {
         <div className="col-span-5 space-y-8">
           {skills.length > 0 && (
             <section>
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 block border-b border-slate-200 pb-1">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-3 block border-b border-slate-200 pb-1" style={{ color: 'var(--cv-accent)', opacity: 0.6 }}>
                 &gt; /yetenekler
               </h3>
               <div className="flex flex-wrap gap-2">
                 {skills.map(s => (
-                  <span key={s.id} className="px-2 py-1 bg-slate-900 text-slate-100 text-xs rounded border border-slate-700 font-medium">
+                  <span key={s.id} className="px-2 py-1 text-slate-100 text-xs rounded border font-medium" style={{ backgroundColor: 'var(--cv-accent)', borderColor: 'var(--cv-accent)' }}>
                     {s.name}
                   </span>
                 ))}
@@ -98,7 +98,7 @@ export default function TechFocusTemplate({ data }: Props) {
 
           {languages.length > 0 && (
             <section>
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 block border-b border-slate-200 pb-1">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-3 block border-b border-slate-200 pb-1" style={{ color: 'var(--cv-accent)', opacity: 0.6 }}>
                 &gt; /diller
               </h3>
               <ul className="text-sm space-y-2">
@@ -117,7 +117,7 @@ export default function TechFocusTemplate({ data }: Props) {
         <div className="col-span-7 space-y-8">
           {education.length > 0 && (
             <section>
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 block border-b border-slate-200 pb-1">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-3 block border-b border-slate-200 pb-1" style={{ color: 'var(--cv-accent)', opacity: 0.6 }}>
                 &gt; /eğitim
               </h3>
               <div className="space-y-4">
@@ -137,7 +137,7 @@ export default function TechFocusTemplate({ data }: Props) {
 
           {certifications.length > 0 && (
             <section>
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 block border-b border-slate-200 pb-1">
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-3 block border-b border-slate-200 pb-1" style={{ color: 'var(--cv-accent)', opacity: 0.6 }}>
                 &gt; /sertifikalar
               </h3>
               <div className="space-y-3">

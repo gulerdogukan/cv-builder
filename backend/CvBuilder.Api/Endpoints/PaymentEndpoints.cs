@@ -1,6 +1,10 @@
+using System.Security.Cryptography;
+using System.Text;
+using CvBuilder.Api.Data;
 using CvBuilder.Api.DTOs;
 using CvBuilder.Api.Middleware;
 using CvBuilder.Api.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace CvBuilder.Api.Endpoints;
 
@@ -36,18 +40,48 @@ public static class PaymentEndpoints
         })
         .RequireAuthorization();
 
-        // POST /api/payment/callback — İyzico webhook (auth gerekmez)
+        // POST /api/payment/callback — İyzico webhook (auth gerekmez, imza doğrulanır)
         group.MapPost("/callback", async (
             HttpContext ctx,
-            IPaymentService paymentService) =>
+            IPaymentService paymentService,
+            IConfiguration config,
+            ILogger<Program> logger) =>
         {
             // İyzico form-encoded POST gönderir
             var form   = await ctx.Request.ReadFormAsync();
             var token  = form["token"].ToString();
-            var status = form["status"].ToString();
 
             if (string.IsNullOrEmpty(token))
                 return Results.BadRequest(new { error = "Token eksik" });
+
+            // GÜVENLİK FIX #2: İyzico HMAC-SHA256 imza doğrulaması
+            // İyzico her callback'te x-iyzi-rnd (nonce) ve x-iyzi-signature header'ı gönderir.
+            // İmza = Base64(HMAC-SHA256(apiKey + rnd, secretKey))
+            var secretKey = config["Iyzico:SecretKey"] ?? "";
+            var apiKey    = config["Iyzico:ApiKey"]    ?? "";
+
+            if (!string.IsNullOrEmpty(secretKey))
+            {
+                var rnd       = ctx.Request.Headers["x-iyzi-rnd"].ToString();
+                var signature = ctx.Request.Headers["x-iyzi-signature"].ToString();
+
+                if (!string.IsNullOrEmpty(rnd) && !string.IsNullOrEmpty(signature))
+                {
+                    var expectedSig = ComputeIyzicoSignature(apiKey, secretKey, rnd);
+                    if (!CryptographicOperations.FixedTimeEquals(
+                            Encoding.UTF8.GetBytes(expectedSig),
+                            Encoding.UTF8.GetBytes(signature)))
+                    {
+                        logger.LogWarning("İyzico callback imza doğrulaması başarısız. Token: {Token}", token[..Math.Min(8, token.Length)]);
+                        return Results.Unauthorized();
+                    }
+                }
+                else
+                {
+                    // Sandbox/test ortamı: header yoksa devam et; production'da zorunlu kıl
+                    logger.LogWarning("İyzico callback imza header'ları eksik. Sandbox mı?");
+                }
+            }
 
             var (success, message) = await paymentService.ProcessCallbackAsync(token);
 
@@ -71,16 +105,41 @@ public static class PaymentEndpoints
         .RequireAuthorization();
 
         // GET /api/payment/verify/{token} — Frontend callback sonrası doğrulama
-        // /payment/result sayfası bu endpoint'i çağırarak sonucu öğrenir
+        // GÜVENLİK FIX #3: RequireAuthorization + token'ın o kullanıcıya ait olduğunu doğrula
         group.MapGet("/verify/{token}", async (
             string token,
-            IPaymentService paymentService) =>
+            HttpContext ctx,
+            IPaymentService paymentService,
+            AppDbContext db) =>
         {
+            var userId = ctx.GetUserId();
+            if (userId is null) return Results.Unauthorized();
+
             if (string.IsNullOrEmpty(token))
                 return Results.BadRequest(new { error = "Token eksik" });
 
+            // Token'ın bu kullanıcıya ait olduğunu doğrula
+            var payment = await db.Payments
+                .FirstOrDefaultAsync(p => p.IyzicoToken == token && p.UserId == userId.Value);
+
+            if (payment is null)
+                return Results.NotFound(new { error = "Ödeme kaydı bulunamadı veya erişim reddedildi." });
+
             var (success, message) = await paymentService.ProcessCallbackAsync(token);
             return Results.Ok(new { success, message });
-        });
+        })
+        .RequireAuthorization();
+    }
+
+    // İyzico HMAC-SHA256 imza hesaplama: Base64(HMAC-SHA256(apiKey + rnd, secretKey))
+    private static string ComputeIyzicoSignature(string apiKey, string secretKey, string rnd)
+    {
+        var data    = apiKey + rnd;
+        var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+        var msgBytes = Encoding.UTF8.GetBytes(data);
+
+        using var hmac = new HMACSHA256(keyBytes);
+        var hash = hmac.ComputeHash(msgBytes);
+        return Convert.ToBase64String(hash);
     }
 }

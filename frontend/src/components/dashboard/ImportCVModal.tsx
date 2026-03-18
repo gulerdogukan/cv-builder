@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAI } from '@/hooks/useAI';
 import { useCV } from '@/hooks/useCV';
+import { useNotificationStore } from '@/stores/notificationStore';
 import type { CVData } from '@/types/cv.types';
 
 interface Props {
@@ -13,6 +14,7 @@ export default function ImportCVModal({ onClose }: Props) {
   const [parsedData, setParsedData] = useState<CVData | null>(null);
   const { importCVFromPdf, isLoading, isRateLimited, remainingRequests } = useAI();
   const { createCV, hydrateCV } = useCV();
+  const { showToast } = useNotificationStore();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,17 +43,17 @@ export default function ImportCVModal({ onClose }: Props) {
 
   const processFile = async (selectedFile: File) => {
     if (selectedFile.type !== 'application/pdf') {
-      alert('Lütfen sadece PDF dosyası yükleyin.');
+      showToast('Lütfen sadece PDF dosyası yükleyin.', 'error');
       return;
     }
     try {
       const jsonStr = await importCVFromPdf(selectedFile);
       if (jsonStr) {
         setParsedData(JSON.parse(jsonStr));
+        showToast('CV başarıyla analiz edildi.', 'success');
       }
-    } catch (err) {
-      console.error(err);
-      alert('Dosya okunurken veya AI ile dönüşüm yapılırken hata oluştu.');
+    } catch {
+      showToast('Dosya okunurken veya AI ile dönüşüm yapılırken hata oluştu.', 'error');
     }
   };
 
@@ -60,10 +62,10 @@ export default function ImportCVModal({ onClose }: Props) {
     try {
       const cv = await createCV(parsedData.personal?.fullName ? `${parsedData.personal.fullName} - İçe Aktarılan CV` : 'İçe Aktarılan CV');
       await hydrateCV(cv.id, parsedData);
+      showToast('CV editöre başarıyla aktarıldı.', 'success');
       navigate(`/editor/${cv.id}`);
-    } catch (err) {
-      console.error(err);
-      alert('CV editöre aktarılamadı.');
+    } catch {
+      showToast('CV editöre aktarılamadı.', 'error');
     }
   };
 

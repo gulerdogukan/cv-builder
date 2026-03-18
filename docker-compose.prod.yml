@@ -12,7 +12,7 @@ services:
     environment:
       POSTGRES_DB: cvbuilder
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -31,19 +31,25 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - PORT=8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=cvbuilder;Username=postgres;Password=${DB_PASSWORD:-changeme}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=cvbuilder;Username=postgres;Password=${DB_PASSWORD:?DB_PASSWORD is required}
       - PdfService__BaseUrl=http://pdf-service:3001
-      - App__FrontendUrl=${FRONTEND_URL:-http://localhost}
-      - App__CorsOrigins__0=${FRONTEND_URL:-http://localhost}
-      - Anthropic__ApiKey=${ANTHROPIC_API_KEY}
-      - Supabase__Url=${SUPABASE_URL}
-      - Supabase__JwtSecret=${SUPABASE_JWT_SECRET}
-      - Supabase__WebhookSecret=${SUPABASE_WEBHOOK_SECRET}
-      - Iyzico__ApiKey=${IYZICO_API_KEY}
-      - Iyzico__SecretKey=${IYZICO_SECRET_KEY}
-      - Iyzico__BaseUrl=https://api.iyzipay.com
+      - App__FrontendUrl=${FRONTEND_URL:?FRONTEND_URL is required}
+      - App__CorsOrigins__0=${FRONTEND_URL}
+      # Supabase
+      - Supabase__Url=${SUPABASE_URL:?SUPABASE_URL is required}
+      - Supabase__JwtSecret=${SUPABASE_JWT_SECRET:?SUPABASE_JWT_SECRET is required}
+      - Supabase__WebhookSecret=${SUPABASE_WEBHOOK_SECRET:?SUPABASE_WEBHOOK_SECRET is required}
+      # Gemini AI (was incorrectly named Anthropic__ApiKey — fixed)
+      - Gemini__ApiKey=${GEMINI_API_KEY:?GEMINI_API_KEY is required}
+      - Gemini__FlashModel=${GEMINI_FLASH_MODEL:-gemini-2.5-flash}
+      - Gemini__LiteModel=${GEMINI_LITE_MODEL:-gemini-2.5-flash-lite}
+      # İyzico — BaseUrl overridden in appsettings.Production.json (https://api.iyzipay.com)
+      - Iyzico__ApiKey=${IYZICO_API_KEY:-}
+      - Iyzico__SecretKey=${IYZICO_SECRET_KEY:-}
       - Iyzico__OneTimePrice=${IYZICO_ONE_TIME_PRICE:-99.0}
       - Iyzico__MonthlyPrice=${IYZICO_MONTHLY_PRICE:-49.0}
+      # Internal secret for webhook/inter-service auth
+      - InternalSecret=${INTERNAL_SECRET:?INTERNAL_SECRET is required}
     depends_on:
       postgres:
         condition: service_healthy

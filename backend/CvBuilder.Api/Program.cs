@@ -8,6 +8,12 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Port ayarı: Docker içinde değilsek 5001 kullan (5000 çakışmasını önlemek için)
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
+{
+    builder.WebHost.UseUrls("http://localhost:5001");
+}
+
 // === Services ===
 
 // Database
@@ -106,6 +112,18 @@ builder.Services.AddHttpClient("PdfService", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+// Google Gemini REST API istemcisi — AIService tarafından kullanılır
+// Base URL sabit; model adı ve API key her istekte URL parametresi olarak gönderilir
+builder.Services.AddHttpClient("Gemini", client =>
+{
+    client.BaseAddress = new Uri("https://generativelanguage.googleapis.com");
+    client.Timeout = TimeSpan.FromSeconds(60); // AI yanıtı uzun sürebilir
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+// IHttpContextAccessor — PaymentService'in gerçek kullanıcı IP'si alması için gerekli (Fix #7)
+builder.Services.AddHttpContextAccessor();
+
 // Application Services
 builder.Services.AddScoped<ICVService, CVService>();
 builder.Services.AddScoped<IAIService, AIService>();
@@ -116,8 +134,65 @@ builder.Services.AddScoped<IPdfService, PdfService>();
 
 var app = builder.Build();
 
+// ── Gemini config startup diagnostics ────────────────────────────────────────
+var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+var geminiKey   = app.Configuration["Gemini:ApiKey"] ?? "";
+var flashModel  = app.Configuration["Gemini:FlashModel"] ?? "gemini-2.0-flash";
+var liteModel   = app.Configuration["Gemini:LiteModel"] ?? "gemini-2.0-flash-lite";
+var environment = app.Environment.EnvironmentName;
+
+startupLogger.LogInformation("=== Gemini Config Diagnostics ===");
+startupLogger.LogInformation("Environment      : {Env}", environment);
+startupLogger.LogInformation("FlashModel       : {Model}", flashModel);
+startupLogger.LogInformation("LiteModel        : {Model}", liteModel);
+
+if (string.IsNullOrWhiteSpace(geminiKey))
+{
+    startupLogger.LogCritical(
+        "GEMINI API KEY BULUNAMADI! " +
+        "appsettings.Development.json veya docker-compose env 'Gemini__ApiKey' kontrol et. " +
+        "Tüm AI endpoint'leri fallback değer döndürecek.");
+}
+else
+{
+    var keyPreview = geminiKey.Length >= 8
+        ? $"{geminiKey[..8]}... ({geminiKey.Length} karakter)"
+        : "(çok kısa — geçersiz olabilir)";
+    startupLogger.LogInformation("Gemini:ApiKey    : {KeyPreview}", keyPreview);
+
+    if (geminiKey.Length < 30)
+        startupLogger.LogWarning(
+            "Gemini:ApiKey çok kısa ({Len} karakter). Google API key'leri genellikle 39 karakterdir.",
+            geminiKey.Length);
+}
+startupLogger.LogInformation("=================================");
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Middleware
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
+// HTTPS redirect — production'da platform (Railway/nginx) zaten TLS terminate eder,
+// bu sadece uygulama katmanında ek güvence sağlar (isteğe bağlı olarak etkin)
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+// Security headers — API yanıtlarına eklenir (nginx de ekliyor, çift koruma)
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"]        = "DENY";
+    context.Response.Headers["Referrer-Policy"]        = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"]     = "camera=(), microphone=(), geolocation=()";
+    // Swagger UI development'ta ihtiyaç duyar, production'da zaten kapalı
+    if (!app.Environment.IsDevelopment())
+    {
+        context.Response.Headers["Content-Security-Policy"] =
+            "default-src 'none'; frame-ancestors 'none'";
+    }
+    await next();
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -147,11 +222,50 @@ app.MapGet("/api/public/cv/{id:guid}", async (Guid id, ICVService cvService) =>
     return cv is null ? Results.NotFound() : Results.Ok(cv);
 });
 
-// Health check
-app.MapGet("/health", () => Results.Ok(new { status = "OK", timestamp = DateTime.UtcNow }));
+// Health check — DB bağlantısı + Gemini key varlığı + servis versiyonu
+app.MapGet("/health", async (AppDbContext db, IConfiguration config) =>
+{
+    var checks = new Dictionary<string, object>();
+    var healthy = true;
+
+    // DB bağlantı kontrolü
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("SELECT 1");
+        checks["database"] = "ok";
+    }
+    catch (Exception ex)
+    {
+        checks["database"] = $"error: {ex.Message[..Math.Min(80, ex.Message.Length)]}";
+        healthy = false;
+    }
+
+    // Gemini API key varlığı (değeri değil)
+    var geminiKey = config["Gemini:ApiKey"] ?? "";
+    checks["gemini"] = !string.IsNullOrWhiteSpace(geminiKey) ? "configured" : "missing";
+    if (string.IsNullOrWhiteSpace(geminiKey)) healthy = false;
+
+    // Supabase URL varlığı
+    var supabaseUrl = config["Supabase:Url"] ?? "";
+    checks["supabase"] = !string.IsNullOrWhiteSpace(supabaseUrl) ? "configured" : "missing";
+    if (string.IsNullOrWhiteSpace(supabaseUrl)) healthy = false;
+
+    var result = new
+    {
+        status    = healthy ? "healthy" : "degraded",
+        timestamp = DateTime.UtcNow,
+        version   = "1.0.0",
+        checks
+    };
+
+    return healthy ? Results.Ok(result) : Results.Json(result, statusCode: 503);
+}).AllowAnonymous();
 
 // DB initialization — runs in all environments (dev + production)
-// EnsureCreated() is idempotent: creates tables only if they don't exist.
+// NOT: Bu proje henüz formal EF Core migration dosyaları içermiyor.
+// EnsureCreatedAsync() EF migration geçmişini bilmez; __EFMigrationsHistory tablosuyla çakışabilir.
+// TODO: `dotnet ef migrations add InitialCreate` ile formal migration'a geçilmeli,
+//       ardından EnsureCreatedAsync() → MigrateAsync() yapılmalıdır.
 // ExecuteSqlRawAsync calls use IF NOT EXISTS so they are safe to re-run on every startup.
 {
     using var scope = app.Services.CreateScope();
@@ -160,8 +274,28 @@ app.MapGet("/health", () => Results.Ok(new { status = "OK", timestamp = DateTime
 
     try
     {
-        // Tabloları oluştur (EF Core migration dosyası olmadan da çalışır)
-        await db.Database.EnsureCreatedAsync();
+        // Migration tablosu varsa MigrateAsync() kullan (formal migration varsa),
+        // yoksa EnsureCreatedAsync() ile schema oluştur.
+        // Bu sayede hem migration'lı hem migration'sız ortamda güvenli çalışır.
+        var migrationTableExists = false;
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "SELECT 1 FROM \"__EFMigrationsHistory\" LIMIT 1");
+            migrationTableExists = true;
+        }
+        catch { /* Tablo yok — EnsureCreated kullan */ }
+
+        if (migrationTableExists)
+        {
+            logger.LogInformation("Migration tablosu bulundu — MigrateAsync() kullanılıyor.");
+            await db.Database.MigrateAsync();
+        }
+        else
+        {
+            logger.LogInformation("Migration tablosu yok — EnsureCreatedAsync() kullanılıyor.");
+            await db.Database.EnsureCreatedAsync();
+        }
 
         // AI rate limit kolonlarını ekle (ALTER TABLE IF NOT EXISTS — idempotent)
         await db.Database.ExecuteSqlRawAsync("""

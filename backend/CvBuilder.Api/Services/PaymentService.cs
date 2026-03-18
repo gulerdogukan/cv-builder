@@ -14,13 +14,19 @@ public class PaymentService : IPaymentService
     private readonly AppDbContext _db;
     private readonly IConfiguration _config;
     private readonly ILogger<PaymentService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private const string CURRENCY = "TRY";
 
-    public PaymentService(AppDbContext db, IConfiguration config, ILogger<PaymentService> logger)
+    public PaymentService(
+        AppDbContext db,
+        IConfiguration config,
+        ILogger<PaymentService> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
-        _db     = db;
-        _config = config;
-        _logger = logger;
+        _db                  = db;
+        _config              = config;
+        _logger              = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     private Options IyzicoOptions() => new Options
@@ -59,8 +65,17 @@ public class PaymentService : IPaymentService
         _db.Payments.Add(payment);
         await _db.SaveChangesAsync();
 
-        // Gerçek kullanıcı IP'sini al; fallback sadece sandbox için
-        var clientIp = _config["Iyzico:FallbackIp"] ?? "85.34.78.112";
+        // GÜVENLİK FIX #7: Gerçek kullanıcı IP'sini IHttpContextAccessor ile al.
+        // Reverse proxy arkasındaysa X-Forwarded-For'u da kontrol et.
+        // Sandbox fallback sadece değer elde edilemezse kullanılır.
+        var remoteIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+        if (string.IsNullOrEmpty(remoteIp) || remoteIp == "::1")
+        {
+            // Reverse proxy arkasında gerçek IP X-Forwarded-For'dan gelebilir
+            var forwarded = _httpContextAccessor.HttpContext?.Request.Headers["X-Forwarded-For"].ToString();
+            remoteIp = forwarded?.Split(',').FirstOrDefault()?.Trim();
+        }
+        var clientIp = remoteIp ?? _config["Iyzico:FallbackIp"] ?? "127.0.0.1";
 
         var checkoutRequest = new CreateCheckoutFormInitializeRequest
         {

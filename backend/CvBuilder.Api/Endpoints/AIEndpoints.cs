@@ -328,6 +328,23 @@ public static class AIEndpoints
 
     // ---- Rate Limit helpers ----
 
+    /// <summary>
+    /// Gün değişmişse kullanıcının günlük AI istek sayacını sıfırlar.
+    /// Gerçek DB kayıt çağrısı caller'a bırakılır (SaveChangesAsync).
+    /// </summary>
+    private static bool ResetIfNewDay(User user)
+    {
+        var today      = DateTime.UtcNow.Date;
+        var resetAtUtc = DateTime.SpecifyKind(user.AiRequestsResetAt, DateTimeKind.Utc);
+        if (resetAtUtc.Date < today)
+        {
+            user.AiRequestsToday   = 0;
+            user.AiRequestsResetAt = DateTime.SpecifyKind(today, DateTimeKind.Utc);
+            return true;
+        }
+        return false;
+    }
+
     private record RateLimitResult(bool Allowed, int Remaining, string ResetAt);
 
     private static async Task<RateLimitResult> CheckAndIncrementRateLimit(AppDbContext db, Guid userId)
@@ -339,34 +356,55 @@ public static class AIEndpoints
         if (user.Plan == PlanType.Paid)
             return new RateLimitResult(true, int.MaxValue, "");
 
-        var wasReset = ResetIfNewDay(user);
+        var today      = DateTime.UtcNow.Date;
+        var resetAtUtc = DateTime.SpecifyKind(user.AiRequestsResetAt, DateTimeKind.Utc);
+
+        // Gün değişmişse önce sıfırla (idempotent — tekrar çalışsa da sorun yok)
+        if (resetAtUtc.Date < today)
+        {
+            await db.Database.ExecuteSqlRawAsync("""
+                UPDATE "Users"
+                SET "AiRequestsToday" = 0,
+                    "AiRequestsResetAt" = {0}
+                WHERE "Id" = {1}
+                """,
+                DateTime.SpecifyKind(today, DateTimeKind.Utc),
+                userId);
+
+            // Güncel değerleri DB'den tekrar çek
+            db.ChangeTracker.Clear();
+            user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return new RateLimitResult(false, 0, "");
+        }
 
         if (user.AiRequestsToday >= FreePlanDailyLimit)
         {
-            var resetAt = user.AiRequestsResetAt.AddDays(1).ToString("O");
-            if (wasReset) await db.SaveChangesAsync(); // reset persisted
+            var resetAt = DateTime.SpecifyKind(user.AiRequestsResetAt, DateTimeKind.Utc).AddDays(1).ToString("O");
             return new RateLimitResult(false, 0, resetAt);
         }
 
-        user.AiRequestsToday++;
-        await db.SaveChangesAsync();
+        // GÜVENLİK FIX #5: Race condition'a karşı atomic SQL UPDATE.
+        // "read-then-write" yerine tek sorguda hem koşul kontrol hem artırım yapılır.
+        // Eş zamanlı N istek gelse bile limit aşılamaz.
+        var affected = await db.Database.ExecuteSqlRawAsync("""
+            UPDATE "Users"
+            SET "AiRequestsToday" = "AiRequestsToday" + 1
+            WHERE "Id" = {0}
+              AND "AiRequestsToday" < {1}
+            """,
+            userId,
+            FreePlanDailyLimit);
 
-        var remaining = Math.Max(0, FreePlanDailyLimit - user.AiRequestsToday);
-        return new RateLimitResult(true, remaining, user.AiRequestsResetAt.AddDays(1).ToString("O"));
-    }
-
-    /// Gün değişmişse sayacı sıfırla. True döndürürse SaveChanges gerekir.
-    private static bool ResetIfNewDay(User user)
-    {
-        var today = DateTime.UtcNow.Date; // UTC midnight
-        // Npgsql may return DateTimeKind.Unspecified for timestamptz — force UTC so .Date comparison is correct
-        var resetAtUtc = DateTime.SpecifyKind(user.AiRequestsResetAt, DateTimeKind.Utc);
-        if (resetAtUtc.Date < today)
+        if (affected == 0)
         {
-            user.AiRequestsToday = 0;
-            user.AiRequestsResetAt = DateTime.SpecifyKind(today, DateTimeKind.Utc);
-            return true;
+            // Başka bir istek yarışı kazandı ve limiti doldurdu
+            var resetAt = DateTime.SpecifyKind(user.AiRequestsResetAt, DateTimeKind.Utc).AddDays(1).ToString("O");
+            return new RateLimitResult(false, 0, resetAt);
         }
-        return false;
+
+        // Artırım başarılı — yeni değeri hesapla
+        var newCount  = user.AiRequestsToday + 1;
+        var remaining = Math.Max(0, FreePlanDailyLimit - newCount);
+        return new RateLimitResult(true, remaining, DateTime.SpecifyKind(user.AiRequestsResetAt, DateTimeKind.Utc).AddDays(1).ToString("O"));
     }
 }

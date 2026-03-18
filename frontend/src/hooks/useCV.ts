@@ -18,8 +18,7 @@ export function useCV() {
     try {
       const response = await api.get<CV[]>('/api/cvs');
       setCVList(response.data);
-    } catch (err) {
-      console.error('CV listesi alınamadı:', err);
+    } catch {
       setCVList([]);
     } finally {
       setIsLoading(false);
@@ -34,7 +33,6 @@ export function useCV() {
       setCurrentCV(response.data);
       return response.data;
     } catch (err) {
-      console.error('CV yüklenemedi:', err);
       setCurrentCV(null);
       throw err;
     } finally {

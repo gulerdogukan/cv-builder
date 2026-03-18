@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCV } from '@/hooks/useCV';
 import { useSEO } from '@/hooks/useSEO';
 import { useAuthStore } from '@/stores/authStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 import Navbar from '@/components/layout/Navbar';
 import ImportCVModal from '@/components/dashboard/ImportCVModal';
 import LinkedInImportModal from '@/components/dashboard/LinkedInImportModal';
@@ -13,18 +14,14 @@ export default function Dashboard() {
   useSEO({ title: 'Dashboard', description: 'CV listeniği yönetin, yeni CV oluşturun.', noIndex: true });
   const { cvList, fetchCVList, createCV, deleteCV, duplicateCV, isLoading: cvLoading } = useCV();
   const { user } = useAuthStore();
+  const { confirm, showToast } = useNotificationStore();
   const navigate = useNavigate();
+
   const [isCreating, setIsCreating] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
-  const [errorToast, setErrorToast] = useState<string | null>(null);
-
-  const showError = (msg: string) => {
-    setErrorToast(msg);
-    setTimeout(() => setErrorToast(null), 4000);
-  };
 
   useEffect(() => {
     fetchCVList();
@@ -36,28 +33,39 @@ export default function Dashboard() {
       const cv = await createCV('Yeni CV');
       navigate(`/editor/${cv.id}`);
     } catch {
-      showError('CV oluşturulamadı. Lütfen tekrar deneyin.');
+      showToast('CV oluşturulamadı. Lütfen tekrar deneyin.', 'error');
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleDeleteCV = async (id: string) => {
-    if (!window.confirm('Bu CV\'yi silmek istediğinize emin misiniz?')) return;
-    setDeletingId(id);
-    try {
-      await deleteCV(id);
-    } finally {
-      setDeletingId(null);
-    }
+  const handleDeleteCV = (id: string) => {
+    confirm({
+      title: 'CV Silme Onayı',
+      message: 'Bu CV\'yi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+      confirmLabel: 'Sil',
+      variant: 'danger',
+      onConfirm: async () => {
+        setDeletingId(id);
+        try {
+          await deleteCV(id);
+          showToast('CV başarıyla silindi.', 'success');
+        } catch {
+          showToast('CV silinirken bir hata oluştu.', 'error');
+        } finally {
+          setDeletingId(null);
+        }
+      }
+    });
   };
 
   const handleDuplicateCV = async (id: string) => {
     setDuplicatingId(id);
     try {
       await duplicateCV(id);
+      showToast('CV başarıyla kopyalandı.', 'success');
     } catch {
-      showError('CV kopyalanamadı. Tekrar deneyin.');
+      showToast('CV kopyalanamadı. Tekrar deneyin.', 'error');
     } finally {
       setDuplicatingId(null);
     }
@@ -65,11 +73,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {errorToast && (
-        <div className="fixed top-4 right-4 z-50 px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium bg-destructive text-destructive-foreground transition-all">
-          {errorToast}
-        </div>
-      )}
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
@@ -259,7 +262,7 @@ export default function Dashboard() {
         {user && user.plan === 'free' && cvList.length > 0 && (
           <div className="mt-8 rounded-xl border bg-primary/5 p-4 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Ücretsiz plandayısınız</p>
+              <p className="text-sm font-medium">Ücretsiz plandasınız</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Premium'a geçerek sınırsız CV oluşturun ve PDF indirin.
               </p>

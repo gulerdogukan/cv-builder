@@ -2,19 +2,6 @@
   "version": 3,
   "targets": {
     "net8.0": {
-      "Anthropic.SDK/3.2.0": {
-        "type": "package",
-        "compile": {
-          "lib/net8.0/Anthropic.SDK.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net8.0/Anthropic.SDK.dll": {
-            "related": ".xml"
-          }
-        }
-      },
       "coverlet.collector/6.0.2": {
         "type": "package",
         "build": {
@@ -2044,7 +2031,6 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v8.0",
         "dependencies": {
-          "Anthropic.SDK": "3.2.0",
           "Iyzipay": "2.1.54",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.11",
           "Microsoft.EntityFrameworkCore.Design": "8.0.11",
@@ -2065,24 +2051,6 @@
     }
   },
   "libraries": {
-    "Anthropic.SDK/3.2.0": {
-      "sha512": "yuRz9Z+9SUzjiMu/DAZTjDITHsJqC4KJoTX/0nnyuLsBFUfCOYFIowKIN+b0ceXRLofqbTlDzKx+evtzLLvksQ==",
-      "type": "package",
-      "path": "anthropic.sdk/3.2.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "README.md",
-        "anthropic.sdk.3.2.0.nupkg.sha512",
-        "anthropic.sdk.nuspec",
-        "lib/net6.0/Anthropic.SDK.dll",
-        "lib/net6.0/Anthropic.SDK.xml",
-        "lib/net8.0/Anthropic.SDK.dll",
-        "lib/net8.0/Anthropic.SDK.xml",
-        "lib/netstandard2.0/Anthropic.SDK.dll",
-        "lib/netstandard2.0/Anthropic.SDK.xml"
-      ]
-    },
     "coverlet.collector/6.0.2": {
       "sha512": "bJShQ6uWRTQ100ZeyiMqcFlhP7WJ+bCuabUs885dJiBEzMsJMSFr7BOyeCw4rgvQokteGi5rKQTlkhfQPUXg2A==",
       "type": "package",
@@ -5246,11 +5214,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
+      "projectUniqueName": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
       "projectName": "CvBuilder.Api.Tests",
-      "projectPath": "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
+      "projectPath": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\CvBuilder.Api.Tests.csproj",
       "packagesPath": "C:\\Users\\DOU\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\obj\\",
+      "outputPath": "C:\\Users\\DOU\\CVBuilder\\cv-builder\\backend\\CvBuilder.Api.Tests\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\DOU\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -317,7 +317,6 @@ C:\Users\DOU\CVBuilder\cv-builder\backend\CvBuilder.Api.Tests\bin\Debug\net8.0\r
 C:\Users\DOU\CVBuilder\cv-builder\backend\CvBuilder.Api.Tests\bin\Debug\net8.0\refs\System.Xml.XPath.dll
 C:\Users\DOU\CVBuilder\cv-builder\backend\CvBuilder.Api.Tests\bin\Debug\net8.0\refs\System.Xml.XPath.XDocument.dll
 C:\Users\DOU\CVBuilder\cv-builder\backend\CvBuilder.Api.Tests\bin\Debug\net8.0\refs\WindowsBase.dll
-C:\Users\DOU\CVBuilder\cv-builder\backend\CvBuilder.Api.Tests\bin\Debug\net8.0\Anthropic.SDK.dll
 C:\Users\DOU\CVBuilder\cv-builder\backend\CvBuilder.Api.Tests\bin\Debug\net8.0\Humanizer.dll
 C:\Users\DOU\CVBuilder\cv-builder\backend\CvBuilder.Api.Tests\bin\Debug\net8.0\Iyzipay.dll
 C:\Users\DOU\CVBuilder\cv-builder\backend\CvBuilder.Api.Tests\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll

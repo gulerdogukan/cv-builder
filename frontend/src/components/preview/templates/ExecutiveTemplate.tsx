@@ -8,22 +8,22 @@ export default function ExecutiveTemplate({ data }: Props) {
   const { personal, summary, experience, education, skills, languages, certifications } = data;
 
   return (
-    <div className="p-10 font-sans text-gray-900 leading-relaxed max-w-4xl mx-auto">
+    <div className="p-10 font-sans text-gray-900 leading-relaxed max-w-4xl mx-auto" style={{ fontFamily: 'var(--cv-font)' }}>
       {/* Header */}
       <header className="mb-6">
-        <h1 className="text-4xl font-extrabold uppercase tracking-tight text-gray-900 mb-2">{personal.fullName || 'Ad Soyad'}</h1>
+        <h1 className="text-4xl font-extrabold uppercase tracking-tight mb-2" style={{ color: 'var(--cv-accent)' }}>{personal.fullName || 'Ad Soyad'}</h1>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-gray-700">
           {personal.email && <div className="flex items-center gap-1.5"><span className="text-gray-400">E:</span> {personal.email}</div>}
           {personal.phone && <div className="flex items-center gap-1.5"><span className="text-gray-400">T:</span> {personal.phone}</div>}
           {personal.location && <div className="flex items-center gap-1.5"><span className="text-gray-400">L:</span> {personal.location}</div>}
-          {personal.linkedin && <div className="flex items-center gap-1.5"><span className="text-gray-400">in:</span> <a href={`https://${personal.linkedin}`} className="hover:underline">{personal.linkedin}</a></div>}
+          {personal.linkedin && <div className="flex items-center gap-1.5"><span className="text-gray-400">in:</span> <a href={`https://${personal.linkedin}`} className="hover:underline" style={{ color: 'var(--cv-accent)' }}>{personal.linkedin}</a></div>}
         </div>
       </header>
 
       {/* Summary */}
       {summary && (
         <section className="mb-8">
-          <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 border-gray-900 pb-1 mb-4">{personal.profession || 'Yönetici Özeti'}</h2>
+          <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 pb-1 mb-4" style={{ borderColor: 'var(--cv-accent)' }}>{personal.profession || 'Yönetici Özeti'}</h2>
           <p className="text-base text-justify leading-relaxed font-medium text-gray-800">{summary}</p>
         </section>
       )}
@@ -31,12 +31,12 @@ export default function ExecutiveTemplate({ data }: Props) {
       {/* Experience */}
       {experience.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 border-gray-900 pb-1 mb-4">Kariyer Özeti</h2>
+          <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 pb-1 mb-4" style={{ borderColor: 'var(--cv-accent)' }}>Kariyer Özeti</h2>
           <div className="space-y-6">
             {experience.map((exp) => (
               <div key={exp.id}>
                 <div className="flex justify-between items-end mb-1">
-                  <h3 className="text-lg font-bold text-gray-900 uppercase">{exp.position}</h3>
+                  <h3 className="text-lg font-bold uppercase tracking-tight" style={{ color: 'var(--cv-accent)' }}>{exp.position}</h3>
                   <span className="text-sm font-bold text-gray-600 tracking-wide">
                     {exp.startDate} – {exp.isCurrent ? 'Günümüz' : exp.endDate}
                   </span>
@@ -57,11 +57,11 @@ export default function ExecutiveTemplate({ data }: Props) {
       {/* Core Competencies (Skills & Languages) */}
       {(skills.length > 0 || languages.length > 0) && (
         <section className="mb-8">
-          <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 border-gray-900 pb-1 mb-4">Temel Yetkinlikler</h2>
+          <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 pb-1 mb-4" style={{ borderColor: 'var(--cv-accent)' }}>Temel Yetkinlikler</h2>
           <div className="grid grid-cols-2 gap-8">
             {skills.length > 0 && (
               <div>
-                <h3 className="font-bold text-gray-800 uppercase text-sm mb-3">Uzmanlık Alanları</h3>
+                <h3 className="font-bold uppercase text-sm mb-3" style={{ color: 'var(--cv-accent)' }}>Uzmanlık Alanları</h3>
                 <ul className="list-disc list-inside text-sm text-gray-700 grid grid-cols-2 gap-x-2 gap-y-1">
                   {skills.map(s => <li key={s.id} className="truncate">{s.name}</li>)}
                 </ul>
@@ -69,7 +69,7 @@ export default function ExecutiveTemplate({ data }: Props) {
             )}
             {languages.length > 0 && (
               <div>
-                <h3 className="font-bold text-gray-800 uppercase text-sm mb-3">Yabancı Diller</h3>
+                <h3 className="font-bold uppercase text-sm mb-3" style={{ color: 'var(--cv-accent)' }}>Yabancı Diller</h3>
                 <ul className="text-sm text-gray-700 space-y-1">
                   {languages.map(l => (
                     <li key={l.id} className="flex justify-between">
@@ -88,7 +88,7 @@ export default function ExecutiveTemplate({ data }: Props) {
       <div className="grid grid-cols-2 gap-8">
         {education.length > 0 && (
           <section>
-            <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 border-gray-900 pb-1 mb-4">Eğitim</h2>
+            <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 pb-1 mb-4" style={{ borderColor: 'var(--cv-accent)' }}>Eğitim</h2>
             <div className="space-y-4">
               {education.map((edu) => (
                 <div key={edu.id}>
@@ -106,7 +106,7 @@ export default function ExecutiveTemplate({ data }: Props) {
 
         {certifications.length > 0 && (
           <section>
-            <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 border-gray-900 pb-1 mb-4">Sertifikalar & Ödüller</h2>
+            <h2 className="text-xl font-bold uppercase tracking-widest border-b-4 pb-1 mb-4" style={{ borderColor: 'var(--cv-accent)' }}>Sertifikalar</h2>
             <div className="space-y-3">
               {certifications.map((c) => (
                 <div key={c.id}>

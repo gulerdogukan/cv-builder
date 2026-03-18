@@ -352,17 +352,6 @@
           "CvBuilder.Api.Tests.dll": {}
         }
       },
-      "Anthropic.SDK/3.2.0": {
-        "runtime": {
-          "lib/net8.0/Anthropic.SDK.dll": {
-            "assemblyVersion": "3.2.0.0",
-            "fileVersion": "3.2.0.0"
-          }
-        },
-        "compile": {
-          "lib/net8.0/Anthropic.SDK.dll": {}
-        }
-      },
       "coverlet.collector/6.0.2": {},
       "Humanizer.Core/2.14.1": {
         "runtime": {
@@ -1806,7 +1795,6 @@
       "xunit.runner.visualstudio/2.8.2": {},
       "CvBuilder.Api/1.0.0": {
         "dependencies": {
-          "Anthropic.SDK": "3.2.0",
           "Iyzipay": "2.1.54",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.11",
           "Microsoft.EntityFrameworkCore.Design": "8.0.11",
@@ -3637,13 +3625,6 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
-    },
-    "Anthropic.SDK/3.2.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-yuRz9Z+9SUzjiMu/DAZTjDITHsJqC4KJoTX/0nnyuLsBFUfCOYFIowKIN+b0ceXRLofqbTlDzKx+evtzLLvksQ==",
-      "path": "anthropic.sdk/3.2.0",
-      "hashPath": "anthropic.sdk.3.2.0.nupkg.sha512"
     },
     "coverlet.collector/6.0.2": {
       "type": "package",

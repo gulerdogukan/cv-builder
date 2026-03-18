@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Sparkles, BarChart3, FileDown, Zap, ShieldCheck, Globe,
-  ArrowRight, Play, Check, ChevronDown, Star,
-  FileText, Sun, Moon
+  Sparkles, FileDown, Zap, ArrowRight, Play, Check, ChevronDown, Star,
+  FileText, Sun, Moon, Linkedin, FileSearch, Target
 } from 'lucide-react';
 import { useSEO } from '@/hooks/useSEO';
 import { useTheme } from '@/hooks/useTheme';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ── Veriler ───────────────────────────────────────────────────────────────────
 
@@ -16,46 +14,46 @@ const FEATURES = [
   {
     Icon: Sparkles,
     color: 'bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400',
-    title: 'AI Destekli Yazım',
-    desc: 'Claude AI ile deneyim açıklamalarınızı güçlü aksiyon fiilleri ve metriklerle güçlendirin.',
+    title: 'AI İçerik Optimizasyonu',
+    desc: 'Yapay zeka ile deneyimlerinizi profesyonel aksiyon fiilleri ve somut başarılarla güçlendirin.',
   },
   {
-    Icon: BarChart3,
-    color: 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400',
-    title: 'ATS Skoru',
-    desc: "CV'nizin ATS uyumluluğunu 0-100 puan üzerinden görün, önerilerle optimize edin.",
-  },
-  {
-    Icon: FileDown,
+    Icon: Linkedin,
     color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
-    title: 'Profesyonel PDF',
-    desc: 'A4 boyutunda, yüksek kaliteli PDF indirin. 3 farklı şablondan istediğinizi seçin.',
+    title: 'Akıllı İçe Aktarma',
+    desc: 'LinkedIn profilinizi veya eski PDF CV\'nizi tek tıkla aktarın, manuel girişi unutun.',
+  },
+  {
+    Icon: FileSearch,
+    color: 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400',
+    title: 'ATS Simülatörü',
+    desc: "CV'nizin 0-100 arası ATS skorunu görün, okunabilirlik ve doluluk analizlerini inceleyin.",
+  },
+  {
+    Icon: Target,
+    color: 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400',
+    title: 'İlan Eşleşme (Gap Analysis)',
+    desc: 'Başvurduğunuz iş ilanı ile CV\'nizi karşılaştırın, eksik yeteneklerinizi belirleyin.',
   },
   {
     Icon: Zap,
     color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
-    title: 'Anlık Önizleme',
-    desc: 'Değişikliklerinizi gerçek zamanlı görün. Bölme görünümü ile yan yana kullanın.',
+    title: 'Kariyer Asistanı',
+    desc: 'Hedeflediğiniz pozisyona özel "Ön Yazı" (Cover Letter) üretin ve kariyer tavsiyeleri alın.',
   },
   {
-    Icon: ShieldCheck,
-    color: 'bg-primary/10 text-primary dark:bg-primary/20',
-    title: 'Güvenli Depolama',
-    desc: "CV'leriniz Supabase üzerinde güvenle saklanır. Google ile tek tıkla giriş yapın.",
-  },
-  {
-    Icon: Globe,
+    Icon: FileDown,
     color: 'bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400',
-    title: 'Türkçe Arayüz',
-    desc: 'Tamamen Türkçe, sezgisel arayüz. İngilizce bilgisi gerektirmez.',
+    title: 'Profesyonel PDF & Paylaşım',
+    desc: 'High-quality PDF indirin veya tek tıkla CV\'nizi web\'e açıp linkle paylaşın.',
   },
 ];
 
 const STEPS = [
-  { num: '01', title: 'Kayıt Ol', desc: 'Google ile tek tıkla ücretsiz hesap oluşturun.' },
-  { num: '02', title: 'Bilgileri Gir', desc: 'Profilinizi ve deneyimlerinizi kolayca doldurun.' },
-  { num: '03', title: 'AI ile Güçlendir', desc: 'Tek tıkla dönüştürün, ATS skorunuzu ölçün.' },
-  { num: '04', title: 'PDF İndir', desc: 'Beğendiğiniz şablonla PDF olarak indirin.' },
+  { num: '01', title: 'Verilerini Aktar', desc: 'LinkedIn veya eski PDF CV\'ni saniyeler içinde akıllandır.' },
+  { num: '02', title: 'AI ile Optimize Et', desc: 'Deneyimlerini AI ile güçlendir, ATS skorunu yükselt.' },
+  { num: '03', title: 'İlanla Eşleştir', desc: 'Hedef iş ilanına uygunluk testini yap ve kapak yazını hazırla.' },
+  { num: '04', title: 'İndir & Paylaş', desc: 'PDF olarak indir veya web linki ile işverenlere gönder.' },
 ];
 
 const TEMPLATES = [
@@ -79,12 +77,24 @@ const FAQS = [
     a: 'Evet! CV oluşturma, düzenleme ve önizleme tamamen ücretsizdir. PDF indirme özelliği için Premium plana geçmeniz gerekmektedir.',
   },
   {
+    q: 'Verilerim güvende mi?',
+    a: 'Kesinlikle. Verileriniz şifrelenmiş olarak Supabase altyapımızda saklanır. Bilgileriniz asla üçüncü şahıslarla paylaşılmaz ve dilediğiniz zaman tüm verilerinizi silebilirsiniz.',
+  },
+  {
+    q: 'LinkedIn profilimi nasıl aktarabilirim?',
+    a: "LinkedIn'den profilinizin PDF halini indirip sistemimize yükleyerek tüm deneyim ve yeteneklerinizin otomatik olarak doldurulmasını sağlayabilirsiniz.",
+  },
+  {
     q: 'ATS nedir, neden önemli?',
     a: "ATS (Applicant Tracking System), şirketlerin başvuruları otomatik taramak için kullandığı yazılımlardır. ATS uyumlu CV hazırlamak, şansınızı artırır.",
   },
   {
     q: "Yapay zeka CV'mi nasıl iyileştirir?",
-    a: "Claude AI ile çalışan sistemimiz, açıklamalarınızı güçlü aksiyon fiilleriyle zenginleştirir ve pozisyonunuza özel anahtar kelimeler önerir.",
+    a: "Yapay zeka motorumuz, basit açıklamalarınızı profesyonel aksiyon fiilleriyle zenginleştirir, eksik yeteneklerinizi analiz eder ve her başvuruya özel ön yazı hazırlar.",
+  },
+  {
+    q: 'Public Link (Genel Bağlantı) nedir?',
+    a: 'Oluşturduğunuz CV\'yi tek tıkla web üzerinde yayınlayabilir ve bu linki işverenlere veya sosyal ağlarda paylaşabilirsiniz. PDF gönderme devrini kapatıyoruz!',
   },
   {
     q: 'Kaç CV oluşturabilirim?',
@@ -101,32 +111,6 @@ const STATS = [
 
 // ── Bileşenler ────────────────────────────────────────────────────────────────
 
-function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
-  const [displayed, setDisplayed] = useState('');
-  const [started, setStarted] = useState(false);
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-
-  useEffect(() => {
-    if (isInView) {
-      const t = setTimeout(() => setStarted(true), delay * 1000);
-      return () => clearTimeout(t);
-    }
-  }, [isInView, delay]);
-
-  useEffect(() => {
-    if (!started) return;
-    let index = 0;
-    const interval = setInterval(() => {
-      setDisplayed((prev) => prev + text.charAt(index));
-      index++;
-      if (index >= text.length) clearInterval(interval);
-    }, 40);
-    return () => clearInterval(interval);
-  }, [text, started]);
-
-  return <span ref={ref}>{displayed}</span>;
-}
 
 function TemplatePreviewCard({ t, active, onClick }: {
   t: typeof TEMPLATES[0];
@@ -203,7 +187,33 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 // ── Sayfa ─────────────────────────────────────────────────────────────────────
 
+const AI_EXAMPLES = [
+  {
+    before: "Takımla çalıştım ve projeler yaptım. Müşterilere yardım ettim.",
+    after: "10 kişilik çapraz fonksiyonel ekibi koordine ederek 3 ürün lansmanını başarıyla tamamladım; müşteri memnuniyet skorunu %35 artırdım.",
+    tag: "Deneyim Yazısı"
+  },
+  {
+    before: "React ve JavaScript biliyorum. Web siteleri geliştirdim.",
+    after: "Modern React (Hooks, Context API) ve TypeScript kullanarak, 50.000+ aktif kullanıcısı olan ölçeklenebilir bir e-ticaret platformu geliştirdim.",
+    tag: "Teknik Yetkinlik"
+  },
+  {
+    before: "Hızlı biriyim ve çok çalışırım. Takım oyuncusuyumdur.",
+    after: "Zaman yönetimi ve analitik düşünme becerilerimle, karmaşık teknik problemleri takım içi iş birliğiyle %25 daha hızlı çözüme ulaştırdım.",
+    tag: "Yumuşak Yetenekler"
+  }
+];
+
 export default function Landing() {
+  const [activeExample, setActiveExample] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveExample((prev) => (prev + 1) % AI_EXAMPLES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
   useSEO({ canonical: 'https://cvbuilder.app/' });
   const { isDark, toggle } = useTheme();
   const [activeTemplate, setActiveTemplate] = useState('modern');
@@ -286,7 +296,7 @@ export default function Landing() {
           {/* Rozet */}
           <motion.div variants={itemVariants} className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary text-xs font-medium px-3 py-1.5 rounded-full mb-6 relative overflow-hidden group">
             <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-            Claude AI ile Güçlendirildi
+            Yeni Nesil AI Motoru ile Güçlendirildi
             {/* Shimmer effect */}
             <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
           </motion.div>
@@ -463,7 +473,7 @@ export default function Landing() {
       </section>
 
       {/* ── AI Özelliği Spotlight ── */}
-      <section className="py-24 px-6 relative overflow-hidden bg-foreground text-background dark:bg-card">
+      <section className="py-24 px-6 relative overflow-hidden bg-slate-900 text-slate-50 dark:bg-card dark:text-foreground">
         {/* Glow Effects */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-500/20 rounded-full blur-[120px] pointer-events-none" />
@@ -482,16 +492,17 @@ export default function Landing() {
             <h2 className="text-3xl md:text-4xl font-extrabold leading-tight">
               CV'nizi Sıradanlıktan <br className="hidden md:block"/> <span className="text-primary italic">Mükemmelliğe</span> Taşıyın
             </h2>
-            <p className="mt-5 text-muted-foreground text-lg leading-relaxed dark:text-muted-foreground">
-              Claude AI, deneyim açıklamalarınızı insan gözünün ve ATS algoritmalarının beğeneceği biçimde yeniden yazar. Somut metrikler ve aksiyon fiilleri ile öne çıkın.
+            <p className="mt-5 text-slate-300 dark:text-muted-foreground text-lg leading-relaxed">
+              Yapay zeka sadece metin yazmakla kalmaz, iş dünyasındaki "boşlukları" kapatır. LinkedIn verilerinizi çeker, ATS filtrelerini analiz eder ve her başvuruya özel kariyer asistanlığı yapar.
             </p>
             <ul className="mt-8 space-y-4">
               {[
-                'Güçlü aksiyon fiilleri kullanımı',
-                'Sektöre özel anahtar kelimeler',
-                'Zayıf cümleleri başarı hikayesine çevirme'
+                'LinkedIn ve PDF üzerinden saniyeler içinde CV oluşturma',
+                'ATS sistemlerine özel "Okunabilirlik ve Etki" analizi',
+                'İş ilanına %100 uyumlu Cover Letter (Ön Yazı) üretimi',
+                'Deneyimlerinizi somut başarı hikayelerine çeviren AI motoru'
               ].map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm font-medium">
+                <li key={item} className="flex items-center gap-3 text-sm font-medium text-slate-100 dark:text-foreground">
                   <div className="w-6 h-6 rounded-full bg-primary/20 flex flex-shrink-0 items-center justify-center">
                     <Check className="w-3.5 h-3.5 text-primary" strokeWidth={3} />
                   </div>
@@ -502,51 +513,71 @@ export default function Landing() {
           </motion.div>
 
           {/* Daktilo Animasyonu Kısmı */}
-          <motion.div 
-            className="space-y-4 relative"
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            {/* Energy connector line */}
-            <div className="absolute top-1/2 left-8 w-1 h-32 -translate-y-1/2 bg-gradient-to-b from-border via-primary to-border opacity-50 hidden md:block" />
-            
-            <div className="rounded-2xl bg-background/10 backdrop-blur-sm border border-border/10 p-5 md:ml-12">
-              <p className="text-[10px] font-bold text-destructive uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-destructive" /> Eski Haliniz
-              </p>
-              <p className="text-sm font-medium opacity-60 line-through decoration-destructive/50">
-                Takımla çalıştım ve projeler yaptım. Müşterilere yardım ettim.
-              </p>
-            </div>
-            
-            <motion.div 
-              className="flex justify-center md:ml-12"
-              animate={{ y: [0, 5, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-                <Zap className="w-4 h-4 text-primary-foreground" />
-              </div>
-            </motion.div>
-            
-            <div className="rounded-2xl bg-card border border-primary/30 shadow-2xl shadow-primary/10 p-5 md:ml-12 relative overflow-hidden">
-               {/* Shimmer background */}
-               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-[shimmer_2s_infinite]" />
-               <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-2 flex items-center gap-1.5 relative z-10">
-                <Sparkles className="w-3 h-3 text-primary" /> AI ile Güçlendirilmiş
-              </p>
-              <p className="text-sm font-semibold leading-relaxed relative z-10 text-foreground">
-                <TypewriterText text="5 kişilik çapraz fonksiyonel ekibi koordine ederek 3 ürün lansmanını zamanında teslim ettim; müşteri memnuniyeti skorunu %35 artırdım." delay={0.8} />
-                <motion.span 
-                  animate={{ opacity: [1, 0] }} 
-                  transition={{ repeat: Infinity, duration: 0.8 }}
-                  className="inline-block w-1.5 h-4 bg-primary ml-1 translate-y-1"
+          <div className="relative min-h-[460px] md:pl-20 flex flex-col justify-center">
+            {/* Perfectly aligned vertical axis line */}
+            <div className="absolute top-0 bottom-0 left-[2.5rem] md:left-[5rem] w-px bg-gradient-to-b from-transparent via-primary/30 to-transparent hidden md:block" />
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeExample}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-8 relative z-10"
+              >
+                {/* Eski Haliniz - Starts at the axis (padding 80px) */}
+                <div className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-5 relative max-w-[420px] shadow-xl">
+                   <div className="flex justify-between items-center mb-2">
+                    <p className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                      <span className="w-2 h-2 rounded-full bg-destructive" /> ESKİ HALİ
+                    </p>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-slate-400 font-medium">
+                      {AI_EXAMPLES[activeExample]?.tag}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-slate-400 line-through decoration-destructive/30 italic">
+                    {AI_EXAMPLES[activeExample]?.before}
+                  </p>
+                </div>
+
+                {/* Geçiş İkonu - To center its midpoint (24px) on the 80px axis (container padding): ml-[-1.5rem] */}
+                <motion.div 
+                  className="flex justify-start md:ml-[-1.5rem] py-1"
+                  animate={{ y: [0, 5, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.5)] relative z-20 border-2 border-white/20">
+                    <Zap className="w-6 h-6 text-white" fill="currentColor" />
+                    <div className="absolute -inset-2 rounded-full bg-primary/20 animate-pulse" />
+                  </div>
+                </motion.div>
+                
+                {/* AI Hali - Align perfectly with top card left edge */}
+                <div className="rounded-2xl bg-slate-950/90 backdrop-blur-md border border-primary/40 shadow-2xl shadow-primary/40 p-6 relative overflow-hidden max-w-[440px]">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-[shimmer_3s_infinite]" />
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-3 flex items-center gap-1.5 relative z-10 font-mono">
+                    <Sparkles className="w-3 h-3 text-primary" /> AI GÜNCELLEMESİ
+                  </p>
+                  <p className="text-base font-bold text-white leading-relaxed relative z-10">
+                    {AI_EXAMPLES[activeExample]?.after}
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Dots - Align with the axis */}
+            <div className="flex justify-start gap-2 mt-12">
+              {AI_EXAMPLES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveExample(i)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${activeExample === i ? 'bg-primary w-6' : 'bg-white/20 w-1.5'}`}
+                  aria-label={`Örnek ${i + 1}`}
                 />
-              </p>
+              ))}
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 

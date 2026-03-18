@@ -10,11 +10,11 @@ export default function ModernTemplate({ data }: Props) {
   const { personal, summary, experience, education, skills, languages, certifications } = data;
 
   return (
-    <div className="bg-white text-gray-900 font-sans text-[11px] leading-relaxed" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className="bg-white text-gray-900 leading-relaxed" style={{ fontFamily: 'var(--cv-font)', fontSize: '11px' }}>
       {/* Header */}
-      <div className="bg-primary px-8 py-6 text-white">
+      <div className="px-8 py-6 text-white" style={{ backgroundColor: 'var(--cv-accent)' }}>
         <h1 className="text-2xl font-bold tracking-tight">{personal.fullName || 'Adınız Soyadınız'}</h1>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-blue-100 text-[10px]">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-blue-100 text-[10px]" style={{ opacity: 0.9 }}>
           {personal.email && <span>✉ {personal.email}</span>}
           {personal.phone && <span>☎ {personal.phone}</span>}
           {personal.location && <span>📍 {personal.location}</span>}
@@ -28,7 +28,7 @@ export default function ModernTemplate({ data }: Props) {
         {/* Özet */}
         {summary && (
           <section>
-            <h2 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 pb-1 border-b border-primary/30">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest mb-2 pb-1 border-b" style={{ color: 'var(--cv-accent)', borderColor: 'var(--cv-accent)', opacity: 0.8 }}>
               Profesyonel Özet
             </h2>
             <p className="text-gray-700 leading-relaxed">{summary}</p>
@@ -38,7 +38,7 @@ export default function ModernTemplate({ data }: Props) {
         {/* Deneyim */}
         {experience.length > 0 && (
           <section>
-            <h2 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-3 pb-1 border-b border-primary/30">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest mb-3 pb-1 border-b" style={{ color: 'var(--cv-accent)', borderColor: 'var(--cv-accent)', opacity: 0.8 }}>
               İş Deneyimi
             </h2>
             <div className="space-y-3">
@@ -47,7 +47,7 @@ export default function ModernTemplate({ data }: Props) {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="font-semibold text-[11px]">{exp.position}</p>
-                      <p className="text-primary font-medium text-[10px]">{exp.company}{exp.location ? ` · ${exp.location}` : ''}</p>
+                      <p className="font-medium text-[10px]" style={{ color: 'var(--cv-accent)' }}>{exp.company}{exp.location ? ` · ${exp.location}` : ''}</p>
                     </div>
                     <p className="text-gray-500 text-[9px] whitespace-nowrap shrink-0">
                       {formatDate(exp.startDate)} — {exp.isCurrent ? 'Devam ediyor' : exp.endDate ? formatDate(exp.endDate) : ''}
@@ -65,7 +65,7 @@ export default function ModernTemplate({ data }: Props) {
         {/* Eğitim */}
         {education.length > 0 && (
           <section>
-            <h2 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-3 pb-1 border-b border-primary/30">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest mb-3 pb-1 border-b" style={{ color: 'var(--cv-accent)', borderColor: 'var(--cv-accent)', opacity: 0.8 }}>
               Eğitim
             </h2>
             <div className="space-y-2">
@@ -91,12 +91,12 @@ export default function ModernTemplate({ data }: Props) {
         <div className="grid grid-cols-2 gap-5">
           {skills.length > 0 && (
             <section>
-              <h2 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 pb-1 border-b border-primary/30">
+              <h2 className="text-[10px] font-bold uppercase tracking-widest mb-2 pb-1 border-b" style={{ color: 'var(--cv-accent)', borderColor: 'var(--cv-accent)', opacity: 0.8 }}>
                 Beceriler
               </h2>
               <div className="flex flex-wrap gap-1">
                 {skills.map((skill) => (
-                  <span key={skill.id} className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                  <span key={skill.id} className="text-[9px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: 'var(--cv-accent)', color: 'white', opacity: 0.9 }}>
                     {skill.name}
                   </span>
                 ))}
@@ -106,7 +106,7 @@ export default function ModernTemplate({ data }: Props) {
 
           {languages.length > 0 && (
             <section>
-              <h2 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 pb-1 border-b border-primary/30">
+              <h2 className="text-[10px] font-bold uppercase tracking-widest mb-2 pb-1 border-b" style={{ color: 'var(--cv-accent)', borderColor: 'var(--cv-accent)', opacity: 0.8 }}>
                 Diller
               </h2>
               <div className="space-y-1">
@@ -123,7 +123,7 @@ export default function ModernTemplate({ data }: Props) {
 
         {certifications.length > 0 && (
           <section>
-            <h2 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 pb-1 border-b border-primary/30">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest mb-2 pb-1 border-b" style={{ color: 'var(--cv-accent)', borderColor: 'var(--cv-accent)', opacity: 0.8 }}>
               Sertifikalar
             </h2>
             <div className="grid grid-cols-2 gap-2">
