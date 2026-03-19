@@ -3,7 +3,9 @@ version: '3.8'
 # Prodüksiyon benzeri ortam için docker-compose
 # Frontend: nginx (multi-stage build)
 # Backend: .NET 8 Release build
-# Gerçek production için Vercel + Railway kullanın (bkz. DEPLOYMENT.md)
+# Gerçek production için Railway kullanın (bkz. DEPLOYMENT.md)
+# NOT: Her servis kendi alt-dizinini build context olarak kullanır
+#      (Railway Root Directory ayarı ile uyumlu)
 
 services:
   postgres:
@@ -23,7 +25,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./backend             # Build context = backend/ subdirectory
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
@@ -57,7 +59,7 @@ services:
   # Frontend: nginx ile production build
   frontend:
     build:
-      context: ./frontend
+      context: ./frontend            # Build context = frontend/ subdirectory
       dockerfile: Dockerfile
       args:
         - VITE_API_BASE_URL=${API_URL:-http://localhost:8080}
@@ -72,7 +74,7 @@ services:
 
   pdf-service:
     build:
-      context: ./pdf-service
+      context: ./pdf-service         # Build context = pdf-service/ subdirectory
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:

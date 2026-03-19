@@ -1,6 +1,13 @@
+# ── Railway Service: pdf-service (cv-builder-pdf) ──────────────────────────
+# Dashboard: Settings → Build → Root Directory: pdf-service
+# Dashboard: Settings → Build → Dockerfile Path: Dockerfile
+# Root Directory = "pdf-service" means build context is repo/pdf-service/
+# ────────────────────────────────────────────────────────────────────────────
+
 [build]
 builder = "dockerfile"
 dockerfilePath = "Dockerfile"
+watchPaths = ["**"]
 
 [deploy]
 startCommand = "node index.js"
@@ -8,6 +15,3 @@ healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
-
-[[services]]
-name = "cv-builder-pdf"

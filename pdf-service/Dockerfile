@@ -23,10 +23,11 @@ RUN groupadd --system pptruser && \
     chown -R pptruser:pptruser /app
 USER pptruser
 
-COPY --chown=pptruser:pptruser pdf-service/package.json pdf-service/package-lock.json* ./
+# Build context: repo/pdf-service/  (Railway Root Directory = "pdf-service")
+COPY --chown=pptruser:pptruser package.json package-lock.json* ./
 RUN npm install --only=production
 
-COPY --chown=pptruser:pptruser pdf-service/ .
+COPY --chown=pptruser:pptruser . .
 
 EXPOSE 3001
 CMD ["node", "index.js"]

@@ -1,7 +1,7 @@
-# ── Railway Service: backend (cv-builder-api) ──────────────────────────────
-# Dashboard: Settings → Build → Root Directory: backend
+# ── Railway Service: frontend (cv-builder-web) ──────────────────────────────
+# Dashboard: Settings → Build → Root Directory: frontend
 # Dashboard: Settings → Build → Dockerfile Path: Dockerfile
-# Root Directory = "backend" means build context is repo/backend/
+# Root Directory = "frontend" means build context is repo/frontend/
 # ────────────────────────────────────────────────────────────────────────────
 
 [build]
@@ -10,8 +10,7 @@ dockerfilePath = "Dockerfile"
 watchPaths = ["**"]
 
 [deploy]
-startCommand = "dotnet CvBuilder.Api.dll"
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 20
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
