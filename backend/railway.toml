@@ -11,7 +11,7 @@ watchPaths = ["**"]
 
 [deploy]
 startCommand = "dotnet CvBuilder.Api.dll"
-healthcheckPath = "/health"
+healthcheckPath = "/ping"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3

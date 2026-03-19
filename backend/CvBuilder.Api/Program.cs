@@ -222,7 +222,12 @@ app.MapGet("/api/public/cv/{id:guid}", async (Guid id, ICVService cvService) =>
     return cv is null ? Results.NotFound() : Results.Ok(cv);
 });
 
+// Lightweight liveness probe for Railway healthcheck (no dependencies)
+app.MapGet("/ping", () => Results.Ok(new { status = "ok", time = DateTime.UtcNow }))
+   .AllowAnonymous();
+
 // Health check — DB bağlantısı + Gemini key varlığı + servis versiyonu
+// Always returns 200 so Railway considers the service alive; degraded status in body.
 app.MapGet("/health", async (AppDbContext db, IConfiguration config) =>
 {
     var checks = new Dictionary<string, object>();
@@ -258,7 +263,8 @@ app.MapGet("/health", async (AppDbContext db, IConfiguration config) =>
         checks
     };
 
-    return healthy ? Results.Ok(result) : Results.Json(result, statusCode: 503);
+    // Always 200 — Railway liveness uses /ping; /health is for observability
+    return Results.Ok(result);
 }).AllowAnonymous();
 
 // DB initialization — runs in all environments (dev + production)
