@@ -6,4 +6,3 @@ dist
 .git
 README.md
 Dockerfile
-nginx.conf
