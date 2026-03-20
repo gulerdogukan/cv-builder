@@ -35,9 +35,9 @@ public class AppDbContext : DbContext
 
             entity.HasIndex(c => c.UserId);
 
-            // PostgreSQL optimistic concurrency: xmin system column.
-            // EF Core RowVersion property'sini xmin ile eşleştirir;
-            // eş zamanlı güncelleme çakışmalarında DbUpdateConcurrencyException fırlatır.
+            // PostgreSQL optimistic concurrency: xmin sistem kolonu.
+            // xid tipi PostgreSQL'de uint32'ye karşılık gelir — C# tarafı da uint olmalı.
+            // byte[] + [Timestamp] SQL Server rowversion içindir; Npgsql ile type mismatch fırlatır.
             entity.Property(c => c.RowVersion)
                 .HasColumnName("xmin")
                 .HasColumnType("xid")

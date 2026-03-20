@@ -36,9 +36,9 @@ public class CV
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    /// Optimistic concurrency token — concurrent update çakışmalarını yakalar
-    [Timestamp]
-    public byte[]? RowVersion { get; set; }
+    /// Optimistic concurrency token — PostgreSQL xmin sistem kolonu (uint/xid).
+    /// [Timestamp] SQL Server rowversion içindir; Npgsql için uint kullanılmalı.
+    public uint RowVersion { get; set; }
 
     // Navigation
     [ForeignKey(nameof(UserId))]
