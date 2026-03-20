@@ -204,11 +204,12 @@ export default function Dashboard() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground truncate">{cv.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Son düzenleme: {new Date(cv.updatedAt).toLocaleDateString('tr-TR', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
+                      Son düzenleme: {(() => {
+                        const d = cv.updatedAt ? new Date(cv.updatedAt) : null;
+                        return d && !isNaN(d.getTime())
+                          ? d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+                          : '—';
+                      })()}
                     </p>
                   </div>
                   {cv.atsScore > 0 && (

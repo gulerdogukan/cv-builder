@@ -215,6 +215,34 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<AuthMiddleware>();
 
+// Production'da default/zayıf credential uyarıları
+{
+    var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+    var connStr = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
+
+    if (app.Environment.IsProduction())
+    {
+        // Bağlantı stringinde varsayılan geliştirme değerleri varsa uyar
+        if (connStr.Contains("Username=postgres") && connStr.Contains("Password=postgres"))
+            startupLogger.LogCritical(
+                "GÜVENLIK UYARISI: Bağlantı stringinde varsayılan 'postgres/postgres' " +
+                "kimlik bilgileri kullanılıyor. Production'da güçlü bir kullanıcı adı ve " +
+                "parola ile değiştirin (ConnectionStrings__DefaultConnection env variable).");
+
+        if (connStr.Contains("localhost") || connStr.Contains("127.0.0.1"))
+            startupLogger.LogWarning(
+                "Bağlantı stringinde localhost adresi tespit edildi. " +
+                "Production ortamında harici DB adresi kullanıldığından emin olun.");
+
+        var iyzicoBase = builder.Configuration["Iyzico:BaseUrl"] ?? "";
+        if (iyzicoBase.Contains("sandbox"))
+            startupLogger.LogWarning(
+                "İyzico sandbox URL'si production'da aktif: {Url}. " +
+                "Gerçek ödeme almak için production URL'sine geçin.",
+                iyzicoBase);
+    }
+}
+
 // Endpoints
 app.MapAuthEndpoints();
 app.MapCVEndpoints();

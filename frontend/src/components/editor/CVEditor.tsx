@@ -240,7 +240,7 @@ export default function CVEditor({ onTemplateChange }: Props) {
               <Skills
                 data={data.skills}
                 template={currentCV.template}
-                profession={data.personal.profession}
+                profession={data.personal?.profession}
                 onChange={(v) => handleSectionChange('skills', v)}
               />
             )}

@@ -98,7 +98,15 @@ app.post('/generate', async (req, res) => {
     console.error('PDF generation error:', error);
     res.status(500).json({ error: 'PDF oluşturulurken bir hata oluştu', detail: error.message });
   } finally {
-    if (browser) await browser.close();
+    if (browser) {
+      // browser.close() kendi hatalarını fırlatabilir (process zaten ölmüş vb.)
+      // Bu hatanın request'i etkilememesi için ayrı try-catch'e alıyoruz
+      try {
+        await browser.close();
+      } catch (closeErr) {
+        console.error('Puppeteer browser.close() hatası (non-fatal):', closeErr?.message ?? closeErr);
+      }
+    }
   }
 });
 

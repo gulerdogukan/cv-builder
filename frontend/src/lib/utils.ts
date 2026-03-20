@@ -9,14 +9,22 @@ export function generateId(): string {
   return crypto.randomUUID();
 }
 
-export function formatDate(dateStr: string): string {
-  if (!dateStr) return '';
-  const [year, month] = dateStr.split('-');
+export function formatDate(dateStr: string | null | undefined): string {
+  if (dateStr == null || dateStr.trim() === '') return '';
+  const parts = dateStr.split('-');
+  const year  = parts[0];
+  const month = parts[1];
+
+  // Yıl yoksa veya geçersizse ham string dön
+  if (!year || !/^\d{4}$/.test(year)) return dateStr;
+
   const months = [
     'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
     'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
   ];
   const monthIndex = parseInt(month ?? '1', 10) - 1;
+  // monthIndex aralık dışıysa sadece yılı göster
+  if (monthIndex < 0 || monthIndex > 11) return year;
   return `${months[monthIndex]} ${year}`;
 }
 

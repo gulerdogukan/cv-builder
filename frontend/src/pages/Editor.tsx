@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useCV } from '@/hooks/useCV';
 import { useAuthStore } from '@/stores/authStore';
@@ -30,25 +30,46 @@ export default function Editor() {
   const [showAdModal, setShowAdModal] = useState(false);
   const [adCountdown, setAdCountdown] = useState(30);
   const [adWatched, setAdWatched] = useState(false);
+  // Ref ile interval saklanır — closure stale capture race condition önlenir
+  const adIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Countdown timer for ad modal
   useEffect(() => {
-    if (!showAdModal) return;
-    if (adWatched) return;
+    // Modal kapandıysa veya zaten izlendiyse interval'i temizle
+    if (!showAdModal || adWatched) {
+      if (adIntervalRef.current !== null) {
+        clearInterval(adIntervalRef.current);
+        adIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Modal yeni açıldı — sayacı sıfırla ve başlat
     setAdCountdown(30);
-    const interval = setInterval(() => {
+    if (adIntervalRef.current !== null) clearInterval(adIntervalRef.current);
+
+    adIntervalRef.current = setInterval(() => {
       setAdCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(interval);
+          // Interval'i ref üzerinden güvenli temizle
+          if (adIntervalRef.current !== null) {
+            clearInterval(adIntervalRef.current);
+            adIntervalRef.current = null;
+          }
           setAdWatched(true);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showAdModal]);
+
+    return () => {
+      if (adIntervalRef.current !== null) {
+        clearInterval(adIntervalRef.current);
+        adIntervalRef.current = null;
+      }
+    };
+  }, [showAdModal, adWatched]);
 
   const handleAdPdfExport = () => {
     setShowAdModal(false);
