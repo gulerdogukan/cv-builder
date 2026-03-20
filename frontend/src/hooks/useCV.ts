@@ -54,6 +54,10 @@ export function useCV() {
     try {
       await api.put(`/api/cvs/${cv.id}`, cv);
       setLastSaved(new Date());
+    } catch (err) {
+      // Sessizce kaybolmak yerine logla — kullanıcı "otomatik kaydedildi" görmez
+      console.error('[useCV] saveCV başarısız:', err);
+      throw err;
     } finally {
       setIsSaving(false);
     }

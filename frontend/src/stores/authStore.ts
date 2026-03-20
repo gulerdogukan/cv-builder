@@ -16,6 +16,9 @@ interface AuthStore {
   syncUserWithBackend: () => Promise<void>;
 }
 
+// Modül seviyesinde saklanır — tek abonelik garantisi (StrictMode & HMR koruma)
+let _authSubscription: ReturnType<typeof supabase.auth.onAuthStateChange> | null = null;
+
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   isLoading: true,
@@ -80,8 +83,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
 
-    // Auth state değişikliklerini dinle (tek seferlik kayıt)
-    supabase.auth.onAuthStateChange((event, session) => {
+    // Auth state değişikliklerini dinle — önceki abonelik varsa önce temizle
+    // (React StrictMode'da veya HMR'da çift kayıt/memory leak önlenir)
+    if (_authSubscription) {
+      _authSubscription.data.subscription.unsubscribe();
+    }
+    _authSubscription = supabase.auth.onAuthStateChange((event, session) => {
       // INITIAL_SESSION olayını skip et — initialize() zaten yönetti
       if (event === 'INITIAL_SESSION') return;
 
@@ -127,8 +134,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         throw new Error('Bu e-posta adresiyle kayıtlı bir hesap bulunamadı.');
       throw new Error(error.message);
     }
-    // onAuthStateChange otomatik olarak user'ı set edecek
-    set({ isLoading: false });
+    // Başarılı login: isLoading'i burada false yapmıyoruz.
+    // onAuthStateChange (SIGNED_IN) bunu yapacak — race condition önlenir.
   },
 
   loginWithGoogle: async () => {

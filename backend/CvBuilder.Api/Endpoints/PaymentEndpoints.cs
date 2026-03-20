@@ -4,6 +4,7 @@ using CvBuilder.Api.Data;
 using CvBuilder.Api.DTOs;
 using CvBuilder.Api.Middleware;
 using CvBuilder.Api.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 
 namespace CvBuilder.Api.Endpoints;
@@ -64,6 +65,9 @@ public static class PaymentEndpoints
             {
                 var rnd       = ctx.Request.Headers["x-iyzi-rnd"].ToString();
                 var signature = ctx.Request.Headers["x-iyzi-signature"].ToString();
+                var isProd    = string.Equals(
+                    ctx.RequestServices.GetService<IWebHostEnvironment>()?.EnvironmentName,
+                    "Production", StringComparison.OrdinalIgnoreCase);
 
                 if (!string.IsNullOrEmpty(rnd) && !string.IsNullOrEmpty(signature))
                 {
@@ -76,10 +80,19 @@ public static class PaymentEndpoints
                         return Results.Unauthorized();
                     }
                 }
+                else if (isProd)
+                {
+                    // Production'da imza header'ları eksikse isteği reddet — atlatma engellenir
+                    logger.LogError(
+                        "İyzico callback imza header'ları production'da eksik. " +
+                        "Olası saldırı girişimi. Token: {Token}",
+                        token[..Math.Min(8, token.Length)]);
+                    return Results.Unauthorized();
+                }
                 else
                 {
-                    // Sandbox/test ortamı: header yoksa devam et; production'da zorunlu kıl
-                    logger.LogWarning("İyzico callback imza header'ları eksik. Sandbox mı?");
+                    // Sandbox/test: header yoksa devam et
+                    logger.LogWarning("İyzico callback imza header'ları eksik. Sandbox ortamı.");
                 }
             }
 

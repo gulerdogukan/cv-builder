@@ -16,6 +16,9 @@ interface ATSScoreResponse {
   remainingRequests?: number;
 }
 
+// ATS sonucu türü — bileşenler tarafından kullanılabilir (remainingRequests olmadan)
+export type ATSResult = Omit<ATSScoreResponse, 'remainingRequests'>;
+
 interface SuggestSkillsResponse {
   skills: string[];
   remainingRequests?: number;

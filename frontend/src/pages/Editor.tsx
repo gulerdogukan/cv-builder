@@ -21,6 +21,7 @@ export default function Editor() {
   const { isDark, toggle } = useTheme();
 
   const [viewMode, setViewMode] = useState<ViewMode>('split');
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
   const [isPrinting, setIsPrinting] = useState(false);
@@ -66,7 +67,12 @@ export default function Editor() {
 
 
   useEffect(() => {
-    if (id) fetchCV(id);
+    if (!id) return;
+    setFetchError(null);
+    fetchCV(id).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'CV yüklenemedi.';
+      setFetchError(msg);
+    });
   }, [id, fetchCV]);
 
   useEffect(() => {
@@ -167,6 +173,25 @@ export default function Editor() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  // fetchCV başarısız → sonsuz spinner yerine hata ekranı göster
+  if (fetchError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/20">
+        <div className="flex flex-col items-center gap-4 text-center px-4">
+          <span className="text-4xl">⚠️</span>
+          <p className="text-sm font-semibold text-destructive">CV yüklenirken bir hata oluştu</p>
+          <p className="text-xs text-muted-foreground max-w-xs">{fetchError}</p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            Dashboard'a Dön
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading || !currentCV) {
     return (

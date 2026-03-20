@@ -566,8 +566,20 @@ public class AIService : IAIService
 
         var body = await response.Content.ReadAsStringAsync();
 
-        using var doc       = JsonDocument.Parse(body);
-        var candidate       = doc.RootElement.GetProperty("candidates")[0];
+        using var doc        = JsonDocument.Parse(body);
+        var candidatesEl     = doc.RootElement.GetProperty("candidates");
+
+        // Gemini SAFETY filtresi veya boş yanıt durumunda candidates dizisi boş gelebilir
+        if (candidatesEl.GetArrayLength() == 0)
+        {
+            _logger.LogWarning(
+                "Gemini boş candidates dizisi döndürdü (model: {Model}). " +
+                "Yanıt gövdesi: {Body}",
+                model, body[..Math.Min(300, body.Length)]);
+            throw new InvalidOperationException("Gemini geçerli bir yanıt döndürmedi (candidates boş).");
+        }
+
+        var candidate = candidatesEl[0];
 
         // finishReason kontrolü: STOP = normal, MAX_TOKENS = token limiti doldu (metin kesildi), SAFETY = güvenlik filtresi kesti
         if (candidate.TryGetProperty("finishReason", out var finishReasonEl))
@@ -587,11 +599,14 @@ public class AIService : IAIService
                 _logger.LogWarning("Gemini finishReason: {Reason} (model: {Model})", finishReason, model);
         }
 
-        var text = candidate
-            .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
-            .GetString() ?? "";
+        var partsEl = candidate.GetProperty("content").GetProperty("parts");
+        if (partsEl.GetArrayLength() == 0)
+        {
+            _logger.LogWarning("Gemini candidate.content.parts dizisi boş (model: {Model}).", model);
+            throw new InvalidOperationException("Gemini yanıtında metin içeriği bulunamadı.");
+        }
+
+        var text = partsEl[0].GetProperty("text").GetString() ?? "";
 
         return text.Trim();
     }

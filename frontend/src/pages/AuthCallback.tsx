@@ -19,9 +19,15 @@ export default function AuthCallback() {
       } else {
         // Kod henüz işlenmedi, biraz bekle
         setTimeout(() => {
-          supabase.auth.getSession().then(({ data: { session } }) => {
-            navigate(session ? '/dashboard' : '/login', { replace: true });
-          });
+          supabase.auth.getSession()
+            .then(({ data: { session } }) => {
+              navigate(session ? '/dashboard' : '/login', { replace: true });
+            })
+            .catch((retryErr: unknown) => {
+              const msg = retryErr instanceof Error ? retryErr.message : 'Doğrulama yeniden denenirken hata oluştu.';
+              setError(msg);
+              setTimeout(() => navigate('/login'), 3000);
+            });
         }, 1000);
       }
     });

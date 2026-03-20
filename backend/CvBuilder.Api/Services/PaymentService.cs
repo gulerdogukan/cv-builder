@@ -49,6 +49,28 @@ public class PaymentService : IPaymentService
             _              => (MonthlyPrice,      "CV Builder Aylık",          PaymentPlanType.Monthly),
         };
 
+    /// <summary>
+    /// Kimlik numarasını döndürür.
+    /// Production'da Iyzico:TestIdentityNumber ortam değişkeni ayarlanmalıdır.
+    /// Ayarlanmamışsa sandbox sabit değeri kullanılır ve uyarı loglanır.
+    /// </summary>
+    private string ResolveIdentityNumber()
+    {
+        var configured = _config["Iyzico:TestIdentityNumber"];
+        if (!string.IsNullOrEmpty(configured))
+            return configured;
+
+        // Ortam değişkeni eksik — sandbox fallback
+        var env = _config["ASPNETCORE_ENVIRONMENT"] ?? "Production";
+        if (!string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase))
+            _logger.LogWarning(
+                "Iyzico:TestIdentityNumber yapılandırılmamış. " +
+                "Sandbox test değeri kullanılıyor. " +
+                "Production ortamında bu değerin gerçek kullanıcı kimliğiyle değiştirilmesi gerekir.");
+
+        return "74300864791";
+    }
+
     // ── 1. Checkout Form Başlat ───────────────────────────────────────────────
     public async Task<InitiatePaymentResponse> InitiateCheckoutAsync(
         Guid userId, InitiatePaymentRequest request, string callbackUrl)
@@ -105,9 +127,10 @@ public class PaymentService : IPaymentService
                     : request.FullName,
                 GsmNumber           = request.PhoneNumber ?? "+905000000000",
                 Email               = request.Email,
-                // Production'da gerçek TC kimlik no formdan alınmalı.
                 // Sandbox için sabit değer kullanılır; config'den override edilebilir.
-                IdentityNumber      = _config["Iyzico:TestIdentityNumber"] ?? "74300864791",
+                // Production'da Iyzico:TestIdentityNumber ortam değişkenini ayarlayın veya
+                // gerçek kullanıcı TC kimlik numarası formdan alınmalıdır.
+                IdentityNumber      = ResolveIdentityNumber(),
                 LastLoginDate       = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
                 RegistrationDate    = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
                 RegistrationAddress = "Turkiye",

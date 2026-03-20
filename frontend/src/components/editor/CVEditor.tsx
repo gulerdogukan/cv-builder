@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CVData, SectionType, TemplateType } from '@/types/cv.types';
+import type { ATSResult } from '@/hooks/useAI';
 import { useCV } from '@/hooks/useCV';
 import { useAI } from '@/hooks/useAI';
 import { useAuthStore } from '@/stores/authStore';
@@ -42,7 +43,7 @@ export default function CVEditor({ onTemplateChange }: Props) {
   const { showToast: _showToast } = useNotificationStore();
   const [activeTab, setActiveTab] = useState<TabKey>('personal');
   const [showAtsModal, setShowAtsModal] = useState(false);
-  const [atsResult, setAtsResult] = useState<any>(null);
+  const [atsResult, setAtsResult] = useState<ATSResult | null>(null);
   const saveRef = useRef(saveCV);
   saveRef.current = saveCV;
 
@@ -205,28 +206,28 @@ export default function CVEditor({ onTemplateChange }: Props) {
             {activeTab === 'personal' && (
               <PersonalInfo
                 data={data.personal}
-                onChange={(v: any) => handleSectionChange('personal', v)}
+                onChange={(v) => handleSectionChange('personal', v)}
               />
             )}
             {activeTab === 'summary' && (
               <Summary
                 cvDataJson={JSON.stringify(currentCV.data)}
                 data={data.summary}
-                onChange={(v: any) => handleSectionChange('summary', v)}
+                onChange={(v) => handleSectionChange('summary', v)}
               />
             )}
             {activeTab === 'experience' && (
               <Experience
                 data={data.experience}
                 template={currentCV.template}
-                onChange={(v: any) => handleSectionChange('experience', v)}
+                onChange={(v) => handleSectionChange('experience', v)}
               />
             )}
             {activeTab === 'education' && (
               <Education
                 data={data.education}
                 template={currentCV.template}
-                onChange={(v: any) => handleSectionChange('education', v)}
+                onChange={(v) => handleSectionChange('education', v)}
               />
             )}
             {activeTab === 'skills' && (
@@ -234,21 +235,21 @@ export default function CVEditor({ onTemplateChange }: Props) {
                 data={data.skills}
                 template={currentCV.template}
                 profession={data.personal.profession}
-                onChange={(v: any) => handleSectionChange('skills', v)}
+                onChange={(v) => handleSectionChange('skills', v)}
               />
             )}
             {activeTab === 'languages' && (
               <Languages
                 data={data.languages}
                 template={currentCV.template}
-                onChange={(v: any) => handleSectionChange('languages', v)}
+                onChange={(v) => handleSectionChange('languages', v)}
               />
             )}
             {activeTab === 'certifications' && (
               <Certifications
                 data={data.certifications}
                 template={currentCV.template}
-                onChange={(v: any) => handleSectionChange('certifications', v)}
+                onChange={(v) => handleSectionChange('certifications', v)}
               />
             )}
           </motion.div>

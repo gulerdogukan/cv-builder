@@ -12,9 +12,15 @@ const api = axios.create({
 
 // Request interceptor — Supabase JWT token ekleme
 api.interceptors.request.use(async (config) => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.access_token) {
-    config.headers.Authorization = `Bearer ${session.access_token}`;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
+    }
+  } catch (err) {
+    // Supabase erişilemezse (ağ hatası, down vb.) tokensız devam et.
+    // İstek muhtemelen 401 alır ve response interceptor bunu yönetir.
+    console.warn('[api] Supabase getSession başarısız, token eklenmeden devam ediliyor:', err);
   }
   return config;
 });
