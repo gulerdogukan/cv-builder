@@ -37,6 +37,14 @@ export default function Register() {
     return () => clearTimeout(timer);
   }, [isAuthenticated, countdown, navigate]);
 
+  // E-posta kuralları
+  const emailRules = [
+    { label: '@ işareti içermeli',            met: email.includes('@') },
+    { label: 'Geçerli bir alan adı (örn. .com)', met: /\.[a-zA-Z]{2,}$/.test(email.split('@')[1] ?? '') },
+    { label: 'Boşluk içermemeli',             met: email.length > 0 && !/\s/.test(email) },
+  ];
+  const emailValid = email.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+
   // Şifre kuralları
   const passwordRules = [
     { label: 'En az 6 karakter',     met: password.length >= 6 },
@@ -50,6 +58,11 @@ export default function Register() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    if (!emailValid) {
+      setError('Geçerli bir e-posta adresi girin.');
+      return;
+    }
 
     if (!passwordValid) {
       setError('Şifre tüm gereksinimleri karşılamalıdır.');
@@ -177,11 +190,28 @@ export default function Register() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              className={`w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors ${
+                email && !emailValid ? 'border-destructive' : ''
+              }`}
               placeholder="ornek@email.com"
               autoComplete="email"
               required
             />
+            {email && !emailValid && (
+              <ul className="mt-2 space-y-1">
+                {emailRules.map((rule) => (
+                  <li key={rule.label} className={`flex items-center gap-1.5 text-xs transition-colors ${rule.met ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    <svg className={`w-3.5 h-3.5 shrink-0 ${rule.met ? 'text-green-600' : 'text-muted-foreground/50'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      {rule.met
+                        ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        : <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      }
+                    </svg>
+                    {rule.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium mb-1.5">Şifre</label>
