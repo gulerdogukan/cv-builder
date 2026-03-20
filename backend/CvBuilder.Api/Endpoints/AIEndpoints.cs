@@ -185,7 +185,8 @@ public static class AIEndpoints
             if (file == null || file.Length == 0)
                 return Results.BadRequest(new { error = "Geçerli bir dosya yüklenmedi." });
 
-            if (file.ContentType != "application/pdf")
+            // Content-Type başlığı istemci tarafından manipüle edilebilir — magic bytes ile doğrula
+            if (!await IsValidPdfAsync(file))
                 return Results.BadRequest(new { error = "Sadece PDF formatı desteklenmektedir." });
 
             const long MaxFileSize = 10 * 1024 * 1024; // 10MB limit
@@ -406,5 +407,30 @@ public static class AIEndpoints
         var newCount  = user.AiRequestsToday + 1;
         var remaining = Math.Max(0, FreePlanDailyLimit - newCount);
         return new RateLimitResult(true, remaining, DateTime.SpecifyKind(user.AiRequestsResetAt, DateTimeKind.Utc).AddDays(1).ToString("O"));
+    }
+
+    /// <summary>
+    /// PDF magic bytes doğrulaması — Content-Type başlığına güvenmez.
+    /// Gerçek PDF dosyaları "%PDF-" (0x25 0x50 0x44 0x46 0x2D) ile başlar.
+    /// </summary>
+    private static async Task<bool> IsValidPdfAsync(IFormFile file)
+    {
+        // Content-Type kontrolü (ilk süzgeç)
+        if (!string.Equals(file.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(file.ContentType, "application/octet-stream", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        // Magic bytes kontrolü: %PDF-
+        var signature = new byte[5];
+        await using var stream = file.OpenReadStream();
+        var read = await stream.ReadAsync(signature.AsMemory(0, 5));
+        if (read < 5) return false;
+
+        // %PDF- = 0x25 0x50 0x44 0x46 0x2D
+        return signature[0] == 0x25 &&
+               signature[1] == 0x50 &&
+               signature[2] == 0x44 &&
+               signature[3] == 0x46 &&
+               signature[4] == 0x2D;
     }
 }

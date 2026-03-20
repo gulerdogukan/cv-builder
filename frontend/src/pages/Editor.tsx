@@ -60,9 +60,27 @@ export default function Editor() {
   const handleCopyLink = () => {
     if (!currentCV) return;
     const url = `${window.location.origin}/cv/${currentCV.id}`;
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    // Clipboard API erişim hatalarını yakala (HTTP ortamı, izin reddedildi vb.)
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      // Clipboard API kullanılamıyorsa execCommand fallback
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // Sessizce başarısız — kullanıcıya URL gösterilebilir
+        console.warn('[Editor] Clipboard kopyalama başarısız.');
+      }
+    });
   };
 
 
@@ -104,12 +122,21 @@ export default function Editor() {
     // Switch to preview so cv-print-target is in the DOM
     setViewMode('preview');
 
-    setTimeout(() => {
-      window.print();
-      // Restore view mode after print dialog closes
+    // afterprint fires when print dialog closes (cancel veya print) — 200ms sabit beklemeden güvenilir
+    const restoreAfterPrint = () => {
+      window.removeEventListener('afterprint', restoreAfterPrint);
       setViewMode(prev);
       setIsPrinting(false);
-    }, 200);
+    };
+    window.addEventListener('afterprint', restoreAfterPrint);
+
+    // Yavaş cihazlar için bekleme: preview DOM'a render edilsin
+    // (requestAnimationFrame x2 → bir sonraki boyanma döngüsü garantisi)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.print();
+      });
+    });
   };
 
   const handleJsonExport = () => {

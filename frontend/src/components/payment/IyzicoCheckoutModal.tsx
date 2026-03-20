@@ -17,11 +17,14 @@ export default function IyzicoCheckoutModal({ checkoutFormContent, onClose }: Pr
     const container = containerRef.current;
     if (!container || !checkoutFormContent) return;
 
-    // İyzico'nun script içeren HTML'ini güvenli şekilde yerleştir
+    // Güvenli DOM temizleme: innerHTML = '' yerine replaceChildren kullan.
+    // innerHTML = '' sonraki appendChild öncesinde çift parse tetikleyebilir.
+    // createContextualFragment → script tag'leri çalıştırır (İyzico'nun ihtiyacı olan budur)
+    // ancak kaynak yalnızca kendi backend'imizden gelmeli — asla kullanıcı girdisi olmamalı.
+    container.replaceChildren(); // Mevcut çocukları DOM API ile temizle
     const range = document.createRange();
     range.selectNode(container);
     const fragment = range.createContextualFragment(checkoutFormContent);
-    container.innerHTML = '';
     container.appendChild(fragment);
 
     // ESC ile kapat
@@ -29,7 +32,11 @@ export default function IyzicoCheckoutModal({ checkoutFormContent, onClose }: Pr
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      // Cleanup: container içeriğini temizle
+      container.replaceChildren();
+    };
   }, [checkoutFormContent, onClose]);
 
   return (

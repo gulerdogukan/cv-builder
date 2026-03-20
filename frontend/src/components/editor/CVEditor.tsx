@@ -51,6 +51,12 @@ export default function CVEditor({ onTemplateChange }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSave = useRef(debounce(() => saveRef.current(), 2000)).current;
 
+  // Unmount'ta bekleyen debounce timer'ını iptal et — memory leak önlenir
+  useEffect(() => {
+    return () => debouncedSave.cancel();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // CV data değişince auto-save tetikle
   useEffect(() => {
     if (currentCV) debouncedSave();

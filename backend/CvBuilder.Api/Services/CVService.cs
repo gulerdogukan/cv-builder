@@ -122,7 +122,19 @@ public class CVService : ICVService
         }
 
         cv.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Başka bir istek aynı CV'yi eş zamanlı güncelledi — son kayıt kazanır.
+            // Entry'yi veritabanındaki değerlerle yenile ve tekrar kaydet.
+            foreach (var entry in ex.Entries)
+                await entry.ReloadAsync();
+            await _db.SaveChangesAsync();
+        }
 
         return MapToDetailDto(cv);
     }

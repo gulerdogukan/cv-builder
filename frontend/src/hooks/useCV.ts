@@ -42,9 +42,14 @@ export function useCV() {
 
   const createCV = useCallback(async (title: string) => {
     const { setCVList, cvList: list } = useCVStore.getState();
-    const response = await api.post<CV>('/api/cvs', { title });
-    setCVList([...list, response.data]);
-    return response.data;
+    try {
+      const response = await api.post<CV>('/api/cvs', { title });
+      setCVList([...list, response.data]);
+      return response.data;
+    } catch (err) {
+      console.error('[useCV] createCV başarısız:', err);
+      throw err;
+    }
   }, []);
 
   const saveCV = useCallback(async () => {
@@ -65,15 +70,25 @@ export function useCV() {
 
   const deleteCV = useCallback(async (id: string) => {
     const { setCVList, cvList: list } = useCVStore.getState();
-    await api.delete(`/api/cvs/${id}`);
-    setCVList(list.filter((cv) => cv.id !== id));
+    try {
+      await api.delete(`/api/cvs/${id}`);
+      setCVList(list.filter((cv) => cv.id !== id));
+    } catch (err) {
+      console.error('[useCV] deleteCV başarısız:', err);
+      throw err;
+    }
   }, []);
 
   const duplicateCV = useCallback(async (id: string) => {
     const { setCVList, cvList: list } = useCVStore.getState();
-    const response = await api.post<CV>(`/api/cvs/${id}/duplicate`);
-    setCVList([...list, response.data]);
-    return response.data;
+    try {
+      const response = await api.post<CV>(`/api/cvs/${id}/duplicate`);
+      setCVList([...list, response.data]);
+      return response.data;
+    } catch (err) {
+      console.error('[useCV] duplicateCV başarısız:', err);
+      throw err;
+    }
   }, []);
 
   const hydrateCV = useCallback(async (id: string, data: CVData) => {

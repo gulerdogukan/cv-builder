@@ -18,8 +18,9 @@ export default function PublicCVPage() {
       try {
         const response = await api.get<CV>(`/api/public/cv/${id}`);
         setCv(response.data);
-      } catch (err: any) {
-        if (err.response?.status === 404) {
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 404) {
           setError('Bu CV bulunamadı veya paylaşımı kapatılmış.');
         } else {
           setError('CV yüklenirken bir hata oluştu.');

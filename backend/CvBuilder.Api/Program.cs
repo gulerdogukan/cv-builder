@@ -112,6 +112,13 @@ builder.Services.AddHttpClient("PdfService", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+// PDF health check istemcisi — PdfEndpoints /health endpoint'inde kullanılır.
+// new HttpClient() socket exhaustion'ını önler (IHttpClientFactory bağlantı havuzu yönetir).
+builder.Services.AddHttpClient("pdf-health", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(6); // 5s + 1s tolerans
+});
+
 // Google Gemini REST API istemcisi — AIService tarafından kullanılır
 // Base URL sabit; model adı ve API key her istekte URL parametresi olarak gönderilir
 builder.Services.AddHttpClient("Gemini", client =>
@@ -268,11 +275,13 @@ app.MapGet("/health", async (AppDbContext db, IConfiguration config) =>
 }).AllowAnonymous();
 
 // DB initialization — runs in all environments (dev + production)
-// NOT: Bu proje henüz formal EF Core migration dosyaları içermiyor.
-// EnsureCreatedAsync() EF migration geçmişini bilmez; __EFMigrationsHistory tablosuyla çakışabilir.
-// TODO: `dotnet ef migrations add InitialCreate` ile formal migration'a geçilmeli,
-//       ardından EnsureCreatedAsync() → MigrateAsync() yapılmalıdır.
-// ExecuteSqlRawAsync calls use IF NOT EXISTS so they are safe to re-run on every startup.
+// ÖNEMLI: Bu proje formal EF Core migration dosyaları içermiyor.
+// EnsureCreatedAsync() schema'yı oluşturur ama __EFMigrationsHistory takip etmez.
+// İleride `dotnet ef migrations add InitialCreate` eklendiğinde:
+//   1. EnsureCreatedAsync() çağrısını kaldır
+//   2. Sadece MigrateAsync() kullan
+//   3. Mevcut production DB'de __EFMigrationsHistory manuel oluşturulmalı
+// ExecuteSqlRawAsync çağrıları IF NOT EXISTS kullandığından her başlatmada güvenli tekrar çalışır.
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -280,26 +289,39 @@ app.MapGet("/health", async (AppDbContext db, IConfiguration config) =>
 
     try
     {
-        // Migration tablosu varsa MigrateAsync() kullan (formal migration varsa),
-        // yoksa EnsureCreatedAsync() ile schema oluştur.
-        // Bu sayede hem migration'lı hem migration'sız ortamda güvenli çalışır.
-        var migrationTableExists = false;
-        try
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                "SELECT 1 FROM \"__EFMigrationsHistory\" LIMIT 1");
-            migrationTableExists = true;
-        }
-        catch { /* Tablo yok — EnsureCreated kullan */ }
+        // Formal migration dosyaları var mı kontrol et
+        var pendingMigrations = (await db.Database.GetPendingMigrationsAsync()).ToList();
+        var appliedMigrations  = (await db.Database.GetAppliedMigrationsAsync()).ToList();
 
-        if (migrationTableExists)
+        if (pendingMigrations.Count > 0)
         {
-            logger.LogInformation("Migration tablosu bulundu — MigrateAsync() kullanılıyor.");
+            // Formal migration'lar var ve bekliyor — MigrateAsync uygula
+            logger.LogInformation(
+                "Bekleyen {Count} migration bulundu — MigrateAsync() uygulanıyor: {Names}",
+                pendingMigrations.Count,
+                string.Join(", ", pendingMigrations));
             await db.Database.MigrateAsync();
+        }
+        else if (appliedMigrations.Count > 0)
+        {
+            // Migration'lar zaten uygulanmış — schema güncel
+            logger.LogInformation(
+                "Schema güncel — {Count} migration zaten uygulanmış.",
+                appliedMigrations.Count);
         }
         else
         {
-            logger.LogInformation("Migration tablosu yok — EnsureCreatedAsync() kullanılıyor.");
+            // Hiç formal migration yok — EnsureCreatedAsync ile schema oluştur
+            // UYARI: Bu yol migration history tutmaz; ileride migrations eklenince
+            //        production'da manuel müdahale gerekir.
+            if (app.Environment.IsProduction())
+                logger.LogWarning(
+                    "Production'da formal EF migration bulunamadı. " +
+                    "EnsureCreatedAsync() kullanılıyor. " +
+                    "Migration eklendiğinde bu yolu MigrateAsync() ile değiştirin.");
+            else
+                logger.LogInformation("Formal migration yok — EnsureCreatedAsync() kullanılıyor.");
+
             await db.Database.EnsureCreatedAsync();
         }
 

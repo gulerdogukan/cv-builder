@@ -34,6 +34,15 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(c => c.UserId);
+
+            // PostgreSQL optimistic concurrency: xmin system column.
+            // EF Core RowVersion property'sini xmin ile eşleştirir;
+            // eş zamanlı güncelleme çakışmalarında DbUpdateConcurrencyException fırlatır.
+            entity.Property(c => c.RowVersion)
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
         });
 
         // CVSection

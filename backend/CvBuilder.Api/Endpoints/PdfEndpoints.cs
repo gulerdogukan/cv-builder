@@ -107,13 +107,18 @@ public static class PdfEndpoints
         });
 
         // GET /api/pdf/health — PDF servisi durumu
-        group.MapGet("/health", async (IPdfService _, IConfiguration config) =>
+        // IHttpClientFactory kullan — new HttpClient() socket exhaustion'ı önler
+        group.MapGet("/health", async (
+            IPdfService _,
+            IConfiguration config,
+            IHttpClientFactory httpClientFactory) =>
         {
             var pdfUrl = config["PdfService:BaseUrl"] ?? "http://localhost:3001";
             try
             {
-                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-                var resp = await http.GetAsync($"{pdfUrl}/health");
+                var http = httpClientFactory.CreateClient("pdf-health");
+                using var cts  = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var resp = await http.GetAsync($"{pdfUrl}/health", cts.Token);
                 return Results.Ok(new { pdfServiceStatus = resp.IsSuccessStatusCode ? "OK" : "ERROR" });
             }
             catch

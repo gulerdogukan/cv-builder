@@ -20,13 +20,24 @@ export function formatDate(dateStr: string): string {
   return `${months[monthIndex]} ${year}`;
 }
 
+export type DebouncedFn<T extends (...args: unknown[]) => void> = {
+  (...args: Parameters<T>): void;
+  /** Bekleyen çağrıyı iptal eder — unmount'ta memory leak önlenir */
+  cancel: () => void;
+};
+
 export function debounce<T extends (...args: unknown[]) => void>(
   fn: T,
   ms: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
+): DebouncedFn<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const debounced = (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn(...args), ms);
   };
+  debounced.cancel = () => {
+    clearTimeout(timeoutId);
+    timeoutId = undefined;
+  };
+  return debounced;
 }

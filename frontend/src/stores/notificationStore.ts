@@ -27,6 +27,9 @@ interface NotificationState {
   closeConfirm: () => void;
 }
 
+// Toast timer'larını sakla — erken dismiss'te cleanup için (store dışında)
+const _toastTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
 export const useNotificationStore = create<NotificationState>((set) => ({
   toasts: [],
   confirmConfig: null,
@@ -37,18 +40,27 @@ export const useNotificationStore = create<NotificationState>((set) => ({
       toasts: [...state.toasts, { id, message, type }],
     }));
 
-    // Auto remove after 4 seconds
-    setTimeout(() => {
+    // Auto remove after 4 seconds — timer referansı saklanır
+    const timer = setTimeout(() => {
+      _toastTimers.delete(id);
       set((state) => ({
         toasts: state.toasts.filter((t) => t.id !== id),
       }));
     }, 4000);
+    _toastTimers.set(id, timer);
   },
 
-  removeToast: (id) =>
+  removeToast: (id) => {
+    // Bekleyen auto-remove timer'ını iptal et
+    const timer = _toastTimers.get(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      _toastTimers.delete(id);
+    }
     set((state) => ({
       toasts: state.toasts.filter((t) => t.id !== id),
-    })),
+    }));
+  },
 
   confirm: (config) => set({ confirmConfig: config }),
   
