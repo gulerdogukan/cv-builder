@@ -93,11 +93,17 @@ export function useCV() {
 
   const hydrateCV = useCallback(async (id: string, data: CVData) => {
     const { setCurrentCV, setCVList, cvList: list } = useCVStore.getState();
-    await api.put(`/api/cvs/${id}`, { data });
-    const response = await api.get<CV>(`/api/cvs/${id}`);
-    setCurrentCV(response.data);
-    setCVList(list.map((cv) => (cv.id === id ? response.data : cv)));
-    return response.data;
+    try {
+      await api.put(`/api/cvs/${id}`, { data });
+      const response = await api.get<CV>(`/api/cvs/${id}`);
+      // Store sadece API başarılı olursa güncellenir — tutarsızlık önlenir
+      setCurrentCV(response.data);
+      setCVList(list.map((cv) => (cv.id === id ? response.data : cv)));
+      return response.data;
+    } catch (err) {
+      console.error('[useCV] hydrateCV başarısız:', err);
+      throw err;
+    }
   }, []);
 
   const updateSection = useCallback(
@@ -117,9 +123,15 @@ export function useCV() {
 
   const updateCVTitle = useCallback(async (id: string, title: string) => {
     const { setTitle, setCVList, cvList: list } = useCVStore.getState();
-    await api.put(`/api/cvs/${id}`, { title });
-    setTitle(title);
-    setCVList(list.map((cv) => (cv.id === id ? { ...cv, title } : cv)));
+    try {
+      await api.put(`/api/cvs/${id}`, { title });
+      // Lokal state yalnızca API başarılı olursa güncellenir
+      setTitle(title);
+      setCVList(list.map((cv) => (cv.id === id ? { ...cv, title } : cv)));
+    } catch (err) {
+      console.error('[useCV] updateCVTitle başarısız:', err);
+      throw err;
+    }
   }, []);
 
   const setAccentColor = useCallback((color: string | null) => {

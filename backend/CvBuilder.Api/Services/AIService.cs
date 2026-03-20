@@ -599,14 +599,31 @@ public class AIService : IAIService
                 _logger.LogWarning("Gemini finishReason: {Reason} (model: {Model})", finishReason, model);
         }
 
-        var partsEl = candidate.GetProperty("content").GetProperty("parts");
-        if (partsEl.GetArrayLength() == 0)
+        // SAFETY block veya başka kısıtlamalar: candidate'de "content" olmayabilir
+        if (!candidate.TryGetProperty("content", out var contentEl))
         {
-            _logger.LogWarning("Gemini candidate.content.parts dizisi boş (model: {Model}).", model);
+            var reason = candidate.TryGetProperty("finishReason", out var fr)
+                ? fr.GetString() : "bilinmiyor";
+            _logger.LogWarning(
+                "Gemini candidate'de 'content' alanı yok — finishReason: {Reason} (model: {Model}).",
+                reason, model);
+            throw new InvalidOperationException(
+                $"Gemini içerik döndürmedi (finishReason: {reason}). İçerik güvenlik filtresi tarafından engellenmiş olabilir.");
+        }
+
+        if (!contentEl.TryGetProperty("parts", out var partsEl) || partsEl.GetArrayLength() == 0)
+        {
+            _logger.LogWarning("Gemini candidate.content.parts dizisi boş veya eksik (model: {Model}).", model);
             throw new InvalidOperationException("Gemini yanıtında metin içeriği bulunamadı.");
         }
 
-        var text = partsEl[0].GetProperty("text").GetString() ?? "";
+        if (!partsEl[0].TryGetProperty("text", out var textEl))
+        {
+            _logger.LogWarning("Gemini parts[0]'da 'text' alanı yok (model: {Model}).", model);
+            throw new InvalidOperationException("Gemini yanıtında 'text' alanı bulunamadı.");
+        }
+
+        var text = textEl.GetString() ?? "";
 
         return text.Trim();
     }

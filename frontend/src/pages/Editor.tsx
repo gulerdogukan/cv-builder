@@ -32,6 +32,8 @@ export default function Editor() {
   const [adWatched, setAdWatched] = useState(false);
   // Ref ile interval saklanır — closure stale capture race condition önlenir
   const adIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // afterprint listener ref — hızlı çift tıklamada birden fazla listener birikmesini önler
+  const afterPrintListenerRef = useRef<(() => void) | null>(null);
 
   // Countdown timer for ad modal
   useEffect(() => {
@@ -144,11 +146,17 @@ export default function Editor() {
     setViewMode('preview');
 
     // afterprint fires when print dialog closes (cancel veya print) — 200ms sabit beklemeden güvenilir
+    // Önceki listener varsa temizle — hızlı çift tıklamada listener birikmesini önler
+    if (afterPrintListenerRef.current) {
+      window.removeEventListener('afterprint', afterPrintListenerRef.current);
+    }
     const restoreAfterPrint = () => {
       window.removeEventListener('afterprint', restoreAfterPrint);
+      afterPrintListenerRef.current = null;
       setViewMode(prev);
       setIsPrinting(false);
     };
+    afterPrintListenerRef.current = restoreAfterPrint;
     window.addEventListener('afterprint', restoreAfterPrint);
 
     // Yavaş cihazlar için bekleme: preview DOM'a render edilsin
