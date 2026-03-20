@@ -37,19 +37,27 @@ export default function Register() {
     return () => clearTimeout(timer);
   }, [isAuthenticated, countdown, navigate]);
 
+  // Şifre kuralları
+  const passwordRules = [
+    { label: 'En az 6 karakter',     met: password.length >= 6 },
+    { label: 'En az 1 büyük harf',   met: /[A-Z]/.test(password) },
+    { label: 'En az 1 küçük harf',   met: /[a-z]/.test(password) },
+    { label: 'En az 1 rakam',        met: /[0-9]/.test(password) },
+  ];
+  const passwordValid = passwordRules.every((r) => r.met);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    // Client-side validation
-    if (password !== confirmPassword) {
-      setError('Şifreler eşleşmiyor.');
+    if (!passwordValid) {
+      setError('Şifre tüm gereksinimleri karşılamalıdır.');
       return;
     }
 
-    if (password.length < 6) {
-      setError('Şifre en az 6 karakter olmalıdır.');
+    if (password !== confirmPassword) {
+      setError('Şifreler eşleşmiyor.');
       return;
     }
 
@@ -182,12 +190,28 @@ export default function Register() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-              placeholder="En az 6 karakter"
+              className={`w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors ${
+                password && !passwordValid ? 'border-destructive' : ''
+              }`}
+              placeholder="Şifrenizi oluşturun"
               autoComplete="new-password"
-              minLength={6}
               required
             />
+            {password && (
+              <ul className="mt-2 space-y-1">
+                {passwordRules.map((rule) => (
+                  <li key={rule.label} className={`flex items-center gap-1.5 text-xs transition-colors ${rule.met ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    <svg className={`w-3.5 h-3.5 shrink-0 ${rule.met ? 'text-green-600' : 'text-muted-foreground/50'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      {rule.met
+                        ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        : <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      }
+                    </svg>
+                    {rule.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1.5">Şifre Tekrar</label>

@@ -58,7 +58,13 @@ export default function Login() {
       await login({ email, password });
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
+      const raw = err instanceof Error ? err.message : '';
+      // authStore zaten Türkçe'ye çeviriyor; ham İngilizce gelirse burada yakala
+      if (raw.toLowerCase().includes('invalid') || raw.toLowerCase().includes('credentials')) {
+        setError('E-posta veya şifre hatalı. Lütfen tekrar deneyin.');
+      } else {
+        setError(raw || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
+      }
     }
   };
 
