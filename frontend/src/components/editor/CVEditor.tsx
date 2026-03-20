@@ -39,7 +39,7 @@ export default function CVEditor({ onTemplateChange }: Props) {
   const { currentCV, updateSection, setTemplate, saveCV, isSaving, lastSaved } = useCV();
   const { getATSScore, isLoading: isAILoading, isRateLimited, remainingRequests } = useAI();
   const { user } = useAuthStore();
-  const { showToast } = useNotificationStore();
+  const { showToast: _showToast } = useNotificationStore();
   const [activeTab, setActiveTab] = useState<TabKey>('personal');
   const [showAtsModal, setShowAtsModal] = useState(false);
   const [atsResult, setAtsResult] = useState<any>(null);
@@ -114,22 +114,24 @@ export default function CVEditor({ onTemplateChange }: Props) {
       <div className="px-4 py-2 border-b bg-muted/20 flex items-center gap-4 shrink-0">
         <div className="flex flex-wrap items-center gap-1.5">
           {(Object.keys(TEMPLATE_INFO) as TemplateType[]).map((t) => {
-            const isLocked = TEMPLATE_INFO[t].isPremium && user?.plan !== 'paid';
-            const isActive = currentCV.template === t;
+            const isPremium = TEMPLATE_INFO[t].isPremium;
+            const isLocked  = isPremium && user?.plan !== 'paid';
+            const isActive  = currentCV.template === t;
             return (
               <button
                 key={t}
-                onClick={() => isLocked ? showToast('Premium şablon!') : handleTemplateChange(t)}
+                onClick={() => handleTemplateChange(t)}
+                title={isLocked ? `${TEMPLATE_INFO[t].label} — Önizlemek için tıkla` : TEMPLATE_INFO[t].label}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all whitespace-nowrap border ${
-                  isActive 
+                  isActive
                     ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105'
-                    : isLocked 
-                      ? 'bg-muted/10 text-muted-foreground/30 border-transparent cursor-not-allowed' 
+                    : isLocked
+                      ? 'bg-muted/20 text-muted-foreground/60 border-amber-300/40 hover:bg-amber-50/30 hover:text-muted-foreground'
                       : 'bg-muted/30 text-muted-foreground border-transparent hover:bg-muted/50 hover:text-foreground'
                 }`}
               >
                 {TEMPLATE_INFO[t].label}
-                {TEMPLATE_INFO[t].isPremium && <span className="ml-1 opacity-60">👑</span>}
+                {isPremium && <span className="ml-1 opacity-60">👑</span>}
               </button>
             );
           })}

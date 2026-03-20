@@ -10,7 +10,7 @@ namespace CvBuilder.Api.Endpoints;
 
 public static class AIEndpoints
 {
-    private const int FreePlanDailyLimit = 5;
+    private const int FreePlanDailyLimit = 3;
 
     public static void MapAIEndpoints(this IEndpointRouteBuilder app)
     {

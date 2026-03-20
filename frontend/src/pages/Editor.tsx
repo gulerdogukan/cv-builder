@@ -26,6 +26,35 @@ export default function Editor() {
   const [isPrinting, setIsPrinting] = useState(false);
   const [showCareerModal, setShowCareerModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showAdModal, setShowAdModal] = useState(false);
+  const [adCountdown, setAdCountdown] = useState(30);
+  const [adWatched, setAdWatched] = useState(false);
+
+  // Countdown timer for ad modal
+  useEffect(() => {
+    if (!showAdModal) return;
+    if (adWatched) return;
+    setAdCountdown(30);
+    const interval = setInterval(() => {
+      setAdCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setAdWatched(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAdModal]);
+
+  const handleAdPdfExport = () => {
+    setShowAdModal(false);
+    setAdWatched(false);
+    setAdCountdown(30);
+    handlePdfExport();
+  };
 
   const handleCopyLink = () => {
     if (!currentCV) return;
@@ -309,14 +338,14 @@ export default function Editor() {
               </button>
             </div>
           ) : (
-            <Link
-              to="/pricing"
+            <button
+              onClick={() => { setAdWatched(false); setAdCountdown(30); setShowAdModal(true); }}
               className="rounded-lg border border-primary px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors flex items-center gap-1.5"
             >
               <Download className="w-3.5 h-3.5" />
-              Dışa Aktar
-              <span className="ml-0.5 bg-amber-100 text-amber-700 text-[9px] px-1.5 py-0.5 rounded font-semibold">PREMIUM</span>
-            </Link>
+              PDF İndir
+              <span className="ml-0.5 bg-amber-100 text-amber-700 text-[9px] px-1.5 py-0.5 rounded font-semibold">ÜCRETSİZ</span>
+            </button>
           )}
         </div>
       </nav>
@@ -398,6 +427,7 @@ export default function Editor() {
                 accentColor={currentCV?.accentColor}
                 fontFamily={currentCV?.fontFamily}
                 atsScore={currentCV?.atsScore}
+                isPaid={isPaid}
               />
             </div>
           </div>
@@ -410,6 +440,64 @@ export default function Editor() {
           onClose={() => setShowCareerModal(false)}
           cvData={currentCV.data ?? defaultData}
         />
+      )}
+
+      {/* Ad Modal — free users watch 30s to unlock PDF download */}
+      {showAdModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b flex items-center justify-between">
+              <h2 className="text-sm font-bold">PDF İndirmek İçin Reklam İzle</h2>
+              <button
+                onClick={() => setShowAdModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors text-lg leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Ad placeholder */}
+            <div className="mx-6 my-4 rounded-xl bg-muted/40 border border-dashed border-muted-foreground/30 h-44 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+              <span className="text-3xl">📺</span>
+              <span className="text-xs font-semibold uppercase tracking-widest">Reklam Alanı</span>
+              <span className="text-[10px] opacity-60">Google AdSense buraya entegre edilecek</span>
+            </div>
+
+            {/* Countdown / Download */}
+            <div className="px-6 pb-5 flex flex-col gap-3">
+              {/* Progress bar */}
+              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-1.5 bg-primary rounded-full transition-all duration-1000"
+                  style={{ width: `${((30 - adCountdown) / 30) * 100}%` }}
+                />
+              </div>
+
+              {adWatched ? (
+                <button
+                  onClick={handleAdPdfExport}
+                  className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 shadow-md shadow-primary/20"
+                >
+                  <Download className="w-4 h-4" />
+                  PDF'i İndir
+                </button>
+              ) : (
+                <div className="w-full rounded-lg bg-muted px-4 py-2.5 text-sm font-bold text-muted-foreground flex items-center justify-center gap-2 cursor-not-allowed select-none">
+                  <span className="animate-pulse">⏳</span>
+                  {adCountdown} saniye bekleyin...
+                </div>
+              )}
+
+              <div className="flex items-center gap-1 justify-center">
+                <span className="text-[11px] text-muted-foreground">Sınırsız indirme için</span>
+                <Link to="/pricing" onClick={() => setShowAdModal(false)} className="text-[11px] text-primary font-semibold hover:underline">
+                  Premium'a Geç →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
