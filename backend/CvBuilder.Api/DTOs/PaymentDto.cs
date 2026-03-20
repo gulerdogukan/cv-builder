@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace CvBuilder.Api.DTOs;
 
 public record InitiatePaymentRequest(
-    [Required] string PlanType,    // "one_time" | "monthly"
+    [Required] string PlanType,    // "monthly" | "three_months" | "lifetime"
     [Required][MaxLength(255)] string FullName,
     [Required][EmailAddress][MaxLength(255)] string Email,
     [Phone][MaxLength(20)] string? PhoneNumber = null

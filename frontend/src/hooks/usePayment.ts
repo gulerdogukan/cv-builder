@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import api from '@/lib/api';
 
 interface InitiatePaymentRequest {
-  planType: 'one_time' | 'monthly';
+  planType: 'monthly' | 'three_months' | 'lifetime';
   fullName: string;
   email: string;
   phoneNumber?: string;

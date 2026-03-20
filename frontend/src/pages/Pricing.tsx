@@ -6,7 +6,7 @@ import { useSEO } from '@/hooks/useSEO';
 import IyzicoCheckoutModal from '@/components/payment/IyzicoCheckoutModal';
 import { motion } from 'framer-motion';
 
-type PlanType = 'one_time' | 'monthly';
+type PlanType = 'monthly' | 'three_months' | 'lifetime';
 
 const PLANS = [
   {
@@ -26,42 +26,64 @@ const PLANS = [
     cta: 'Ücretsiz Başla',
     highlight: false,
     planType: null,
-  },
-  {
-    id: 'one_time' as PlanType,
-    name: 'Tek Seferlik',
-    price: 99,
-    priceStr: '99₺',
-    period: 'tek ödeme',
-    description: 'Bir kez öde, sonsuza kadar kullan',
-    features: [
-      { text: '3 CV oluşturma', included: true },
-      { text: 'Tüm şablonlar', included: true },
-      { text: 'Günde 20 AI önerisi', included: true },
-      { text: 'Sınırsız PDF indirme', included: true },
-      { text: 'Sınırsız CV', included: false },
-    ],
-    cta: 'Satın Al',
-    highlight: true,
-    planType: 'one_time' as PlanType,
+    badge: null,
   },
   {
     id: 'monthly' as PlanType,
     name: 'Aylık',
-    price: 49,
-    priceStr: '49₺',
+    price: 129,
+    priceStr: '129₺',
     period: '/ay',
-    description: 'Tüm özelliklere sınırsız erişim',
+    description: 'Tüm özelliklere aylık erişim',
     features: [
       { text: 'Sınırsız CV', included: true },
       { text: 'Tüm şablonlar', included: true },
       { text: 'Sınırsız AI önerisi', included: true },
       { text: 'Sınırsız PDF indirme', included: true },
-      { text: 'Öncelikli destek', included: true },
+      { text: 'İstediğin zaman iptal', included: true },
     ],
     cta: 'Abone Ol',
     highlight: false,
     planType: 'monthly' as PlanType,
+    badge: null,
+  },
+  {
+    id: 'three_months' as PlanType,
+    name: '3 Ay Sınırsız',
+    price: 349,
+    priceStr: '349₺',
+    period: '3 ay',
+    description: 'Tek ödemeyle 3 ay kesintisiz kullan',
+    features: [
+      { text: 'Sınırsız CV', included: true },
+      { text: 'Tüm şablonlar', included: true },
+      { text: 'Sınırsız AI önerisi', included: true },
+      { text: 'Sınırsız PDF indirme', included: true },
+      { text: 'Aylığa göre %10 tasarruf', included: true },
+    ],
+    cta: 'Satın Al',
+    highlight: true,
+    planType: 'three_months' as PlanType,
+    badge: 'EN POPÜLER',
+  },
+  {
+    id: 'lifetime' as PlanType,
+    name: 'Ömür Boyu',
+    price: 1490,
+    priceStr: '1.490₺',
+    period: 'tek ödeme',
+    description: 'Bir kez öde, ömür boyu kullan',
+    features: [
+      { text: 'Sınırsız CV', included: true },
+      { text: 'Tüm şablonlar', included: true },
+      { text: 'Sınırsız AI önerisi', included: true },
+      { text: 'Sınırsız PDF indirme', included: true },
+      { text: 'Tüm gelecek güncellemeler', included: true },
+    ],
+    cta: 'Satın Al',
+    highlight: false,
+    planType: 'lifetime' as PlanType,
+    badge: '🔥 En İyi Değer',
   },
 ];
 
@@ -95,7 +117,7 @@ function CountUpPrice({ to }: { to: number }) {
 export default function Pricing() {
   useSEO({
     title: 'Fiyatlandırma',
-    description: 'CV Builder Premium ile sınırsız PDF, sınırsız AI önerisi. Tek seferlik 99₺ veya 49₺/ay.',
+    description: 'CV Builder Premium ile sınırsız PDF, sınırsız AI önerisi. 129₺/ay, 349₺ 3 ay veya 1.490₺ ömür boyu.',
     canonical: 'https://cvbuilder.app/pricing',
   });
   const { user } = useAuthStore();
@@ -180,7 +202,7 @@ export default function Pricing() {
         )}
 
         {/* Planlar */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
           {PLANS.map((plan, index) => {
             const isCurrentPlan = user?.plan === 'paid' && plan.planType !== null;
             const isFreeAndLoggedIn = !plan.planType && user;
@@ -203,10 +225,14 @@ export default function Pricing() {
                     : 'bg-card hover:shadow-lg z-0'
                 }`}
               >
-                {isPopular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-primary text-primary-foreground text-[11px] font-bold px-4 py-1.5 rounded-full shadow-lg">
-                      EN POPÜLER
+                {plan.badge && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <span className={`text-[11px] font-bold px-4 py-1.5 rounded-full shadow-lg ${
+                      isPopular
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-amber-500 text-white'
+                    }`}>
+                      {plan.badge}
                     </span>
                   </div>
                 )}
@@ -214,11 +240,17 @@ export default function Pricing() {
                 <div>
                   <h3 className="text-xl font-extrabold">{plan.name}</h3>
                   <p className="text-sm text-muted-foreground mt-1.5 min-h-[40px]">{plan.description}</p>
-                  <div className="mt-6 flex items-baseline gap-1">
-                    <span className="text-5xl font-extrabold">
-                      <CountUpPrice to={plan.price} />
-                    </span>
-                    <span className="text-2xl font-bold tracking-tight">₺</span>
+                  <div className="mt-6 flex items-baseline gap-1 flex-wrap">
+                    {plan.price <= 999 ? (
+                      <>
+                        <span className="text-5xl font-extrabold">
+                          <CountUpPrice to={plan.price} />
+                        </span>
+                        <span className="text-2xl font-bold tracking-tight">₺</span>
+                      </>
+                    ) : (
+                      <span className="text-4xl font-extrabold">{plan.priceStr}</span>
+                    )}
                     {plan.period && (
                       <span className="text-sm text-muted-foreground ml-1">{plan.period}</span>
                     )}

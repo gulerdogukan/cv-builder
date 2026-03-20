@@ -37,16 +37,23 @@ public class PaymentService : IPaymentService
     };
 
     // Fiyatlar config'den gelir; yoksa default değer kullanılır
-    private string OneTimePrice => _config["Iyzico:OneTimePrice"] ?? "99.0";
-    private string MonthlyPrice => _config["Iyzico:MonthlyPrice"] ?? "49.0";
+    private string MonthlyPrice     => _config["Iyzico:MonthlyPrice"]     ?? "129.0";
+    private string ThreeMonthsPrice => _config["Iyzico:ThreeMonthsPrice"] ?? "349.0";
+    private string LifetimePrice    => _config["Iyzico:LifetimePrice"]    ?? "1490.0";
+
+    private (string price, string planName, PaymentPlanType planType) ResolvePlan(string planTypeStr) =>
+        planTypeStr switch
+        {
+            "three_months" => (ThreeMonthsPrice, "CV Builder 3 Ay Sınırsız", PaymentPlanType.ThreeMonths),
+            "lifetime"     => (LifetimePrice,    "CV Builder Ömür Boyu",     PaymentPlanType.Lifetime),
+            _              => (MonthlyPrice,      "CV Builder Aylık",          PaymentPlanType.Monthly),
+        };
 
     // ── 1. Checkout Form Başlat ───────────────────────────────────────────────
     public async Task<InitiatePaymentResponse> InitiateCheckoutAsync(
         Guid userId, InitiatePaymentRequest request, string callbackUrl)
     {
-        var isOneTime = request.PlanType == "one_time";
-        var price     = isOneTime ? OneTimePrice : MonthlyPrice;
-        var planName  = isOneTime ? "CV Builder Tek Seferlik" : "CV Builder Aylık";
+        var (price, planName, planType) = ResolvePlan(request.PlanType);
 
         if (!decimal.TryParse(price, System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture, out var priceDecimal))
@@ -59,7 +66,7 @@ public class PaymentService : IPaymentService
             Amount    = priceDecimal,
             Currency  = CURRENCY,
             Status    = PaymentStatus.Pending,
-            PlanType  = isOneTime ? PaymentPlanType.OneTime : PaymentPlanType.Monthly,
+            PlanType  = planType,
             CreatedAt = DateTime.UtcNow,
         };
         _db.Payments.Add(payment);

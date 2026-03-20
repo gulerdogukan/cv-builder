@@ -12,8 +12,10 @@ public enum PaymentStatus
 
 public enum PaymentPlanType
 {
-    OneTime,
-    Monthly
+    OneTime,    // legacy — artık kullanılmıyor, eski kayıtlar için korunuyor
+    Monthly,
+    ThreeMonths,
+    Lifetime
 }
 
 [Table("Payments")]
