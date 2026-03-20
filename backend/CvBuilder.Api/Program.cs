@@ -217,7 +217,7 @@ app.UseMiddleware<AuthMiddleware>();
 
 // Production'da default/zayıf credential uyarıları
 {
-    var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+    // startupLogger daha önce tanımlandı (satır ~145) — yeniden tanımlamak CS0136 hatası verir
     var connStr = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
 
     if (app.Environment.IsProduction())
