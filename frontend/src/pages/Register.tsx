@@ -22,15 +22,20 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const { register, loginWithGoogle, isLoading, isAuthenticated } = useAuthStore();
+  const [countdown, setCountdown] = useState(4);
+  const { register, loginWithGoogle, isLoading, isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();
 
-  // Zaten giriş yapmışsa dashboard'a yönlendir
+  // Zaten giriş yapmışsa geri sayım başlat ve dashboard'a yönlendir
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isAuthenticated) return;
+    if (countdown <= 0) {
       navigate('/dashboard', { replace: true });
+      return;
     }
-  }, [isAuthenticated, navigate]);
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, countdown, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +62,44 @@ export default function Register() {
       setError(err instanceof Error ? err.message : 'Kayıt başarısız. Lütfen tekrar deneyin.');
     }
   };
+
+  // Giriş yapılmışsa "Zaten üyesiniz" ekranı göster
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4 py-8">
+        <div className="w-full max-w-md rounded-xl border bg-card p-8 shadow-sm text-center">
+          <div className="mb-6 flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-xl font-bold mb-2">Zaten Üyesiniz!</h2>
+          <p className="text-sm text-muted-foreground mb-1">
+            <span className="font-medium text-foreground">{user?.email}</span> adresiyle giriş yapılmış durumdasınız.
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            {countdown} saniye içinde dashboard'a yönlendiriliyorsunuz...
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => navigate('/dashboard', { replace: true })}
+              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Hemen Dashboard'a Git
+            </button>
+            <Link
+              to="/"
+              className="w-full rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              Ana Sayfaya Dön
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4 py-8">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useSEO } from '@/hooks/useSEO';
@@ -31,18 +31,25 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, loginWithGoogle, isLoading, isAuthenticated } = useAuthStore();
+  const [countdown, setCountdown] = useState(4);
+  const { login, loginWithGoogle, isLoading, isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Zaten giriş yapmışsa dashboard'a yönlendir
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
 
+  // Zaten giriş yapmışsa geri sayım başlat ve yönlendir
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isAuthenticated) return;
+    if (countdown <= 0) {
       navigate(from, { replace: true });
+      return;
     }
-  }, [isAuthenticated, navigate, from]);
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, countdown, navigate, from]);
+
+  const handleGoNow = useCallback(() => navigate(from, { replace: true }), [navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +61,44 @@ export default function Login() {
       setError(err instanceof Error ? err.message : 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
     }
   };
+
+  // Giriş yapılmışsa "Zaten giriş yaptınız" ekranı göster
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
+        <div className="w-full max-w-md rounded-xl border bg-card p-8 shadow-sm text-center">
+          <div className="mb-6 flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-xl font-bold mb-2">Zaten Giriş Yaptınız!</h2>
+          <p className="text-sm text-muted-foreground mb-1">
+            <span className="font-medium text-foreground">{user?.email}</span> hesabıyla oturum açık.
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            {countdown} saniye içinde yönlendiriliyorsunuz...
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleGoNow}
+              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Hemen Dashboard'a Git
+            </button>
+            <Link
+              to="/"
+              className="w-full rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              Ana Sayfaya Dön
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
