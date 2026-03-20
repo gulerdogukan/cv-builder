@@ -115,6 +115,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       set({ isLoading: false });
+      // Supabase İngilizce hata mesajlarını Türkçe'ye çevir
+      const msg = error.message.toLowerCase();
+      if (msg.includes('invalid login credentials') || msg.includes('invalid credentials') || msg.includes('wrong password'))
+        throw new Error('E-posta veya şifre hatalı. Lütfen tekrar deneyin.');
+      if (msg.includes('email not confirmed'))
+        throw new Error('E-posta adresinizi doğrulamadınız. Lütfen gelen kutunuzu kontrol edin.');
+      if (msg.includes('too many requests'))
+        throw new Error('Çok fazla deneme yapıldı. Lütfen birkaç dakika bekleyin.');
+      if (msg.includes('user not found'))
+        throw new Error('Bu e-posta adresiyle kayıtlı bir hesap bulunamadı.');
       throw new Error(error.message);
     }
     // onAuthStateChange otomatik olarak user'ı set edecek
@@ -131,7 +141,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   register: async ({ email, password, fullName }: RegisterCredentials) => {
     set({ isLoading: true });
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -141,7 +151,20 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     });
     if (error) {
       set({ isLoading: false });
+      const msg = error.message.toLowerCase();
+      if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('user already'))
+        throw new Error('Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.');
+      if (msg.includes('password'))
+        throw new Error('Şifre çok zayıf. En az 6 karakter ve daha güçlü bir şifre seçin.');
+      if (msg.includes('invalid email'))
+        throw new Error('Geçerli bir e-posta adresi girin.');
       throw new Error(error.message);
+    }
+    // Supabase güvenlik nedeniyle var olan e-postalar için hata döndürmez;
+    // bunun yerine identities dizisi boş gelir → "email already registered" anlamına gelir
+    if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+      set({ isLoading: false });
+      throw new Error('Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.');
     }
     set({ isLoading: false });
   },
