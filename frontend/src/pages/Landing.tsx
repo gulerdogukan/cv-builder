@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles, FileDown, Zap, ArrowRight, Play, Check, ChevronDown, Star,
-  FileText, Sun, Moon, Linkedin, FileSearch, Target
+  FileText, Sun, Moon, Linkedin, FileSearch, Target,
+  BarChart2, Wand2, ListChecks, BookOpen, TrendingUp, CheckCircle2, XCircle
 } from 'lucide-react';
 import { useSEO } from '@/hooks/useSEO';
 import { useTheme } from '@/hooks/useTheme';
@@ -207,11 +208,19 @@ const AI_EXAMPLES = [
 
 export default function Landing() {
   const [activeExample, setActiveExample] = useState(0);
+  const [activeAiTab, setActiveAiTab] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveExample((prev) => (prev + 1) % AI_EXAMPLES.length);
     }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveAiTab((prev) => (prev + 1) % 5);
+    }, 4500);
     return () => clearInterval(timer);
   }, []);
   useSEO({ canonical: 'https://cvbuilder.app/' });
@@ -394,6 +403,335 @@ export default function Landing() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── AI Özellik Vitrini ── */}
+      <section id="ai-ozellikleri" className="py-24 px-6 bg-background border-t border-border overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="text-xs font-semibold text-primary uppercase tracking-widest">Yapay Zeka Araçları</span>
+            <h2 className="mt-2 text-3xl font-extrabold">AI ile Fark Yaratan 5 Özellik</h2>
+            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+              Sadece CV editörü değil — her adımda sizi öne çıkaran akıllı araçlar.
+            </p>
+          </motion.div>
+
+          {/* Tab Butonları */}
+          <div className="flex flex-wrap gap-2 justify-center mb-10">
+            {[
+              { Icon: BarChart2,   label: 'ATS Simülatörü',      color: 'text-violet-500' },
+              { Icon: Target,      label: 'İlan Eşleşme',         color: 'text-rose-500'   },
+              { Icon: BookOpen,    label: 'AI Özet Taslakları',   color: 'text-blue-500'   },
+              { Icon: Wand2,       label: 'İçerik İyileştirme',   color: 'text-amber-500'  },
+              { Icon: ListChecks,  label: 'Beceri Önerisi',       color: 'text-green-500'  },
+            ].map(({ Icon, label, color }, i) => (
+              <motion.button
+                key={i}
+                onClick={() => setActiveAiTab(i)}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                  activeAiTab === i
+                    ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25'
+                    : 'bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${activeAiTab === i ? 'text-primary-foreground' : color}`} />
+                {label}
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Mockup Paneli */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeAiTab}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+              className="rounded-2xl border border-border bg-card shadow-xl overflow-hidden"
+            >
+              {/* ─── Tab 0: ATS Simülatörü ─── */}
+              {activeAiTab === 0 && (
+                <div className="p-6 md:p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+                      <BarChart2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">ATS Simülatörü</p>
+                      <p className="text-xs text-muted-foreground">Özgeçmişinizin sistem uyumluluk analizi</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    {/* Sol: Skor */}
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="relative w-36 h-36">
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-muted/30" />
+                          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8"
+                            strokeDasharray={`${2 * Math.PI * 40 * 0.82} ${2 * Math.PI * 40 * 0.18}`}
+                            strokeLinecap="round" className="text-violet-500 transition-all duration-1000" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-4xl font-black text-foreground">82</span>
+                          <span className="text-xs text-muted-foreground font-medium">SKOR</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 rounded-full px-3 py-1 text-xs font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        ATS Uyumlu
+                      </div>
+                    </div>
+                    {/* Sağ: Alt Metrikler */}
+                    <div className="space-y-3">
+                      {[
+                        { label: 'Okunabilirlik ve Format', val: 80, color: 'bg-violet-500', tag: 'Güçlü' },
+                        { label: 'Anahtar Kelime Yoğunluğu', val: 75, color: 'bg-blue-500',   tag: 'İyi'   },
+                        { label: 'Doluluk Oranı',            val: 90, color: 'bg-green-500',  tag: 'Mükemmel' },
+                        { label: 'Başarı Etkisi',            val: 70, color: 'bg-amber-500',  tag: 'İyi'   },
+                      ].map(({ label, val, color, tag }) => (
+                        <div key={label}>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs text-muted-foreground">{label}</span>
+                            <span className="text-xs font-bold">{val} <span className="text-muted-foreground font-normal">— {tag}</span></span>
+                          </div>
+                          <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                            <motion.div
+                              className={`h-full rounded-full ${color}`}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${val}%` }}
+                              transition={{ duration: 0.8, ease: 'easeOut' }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Tab 1: İlan Eşleşme ─── */}
+              {activeAiTab === 1 && (
+                <div className="p-6 md:p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
+                      <Target className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">Kariyer Asistanı — İlan Uygunluk Testi</p>
+                      <p className="text-xs text-muted-foreground">İş ilanına özel CV eşleşme skoru ve boşluk analizi</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Skor */}
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <div className="relative w-28 h-28">
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="40" fill="none" strokeWidth="10" className="stroke-muted/30" />
+                          <circle cx="50" cy="50" r="40" fill="none" strokeWidth="10"
+                            strokeDasharray={`${2 * Math.PI * 40 * 0.72} ${2 * Math.PI * 40 * 0.28}`}
+                            strokeLinecap="round" stroke="#f43f5e"
+                            className="transition-all duration-1000" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-3xl font-black">72</span>
+                          <span className="text-[10px] text-muted-foreground">UYUM</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-center text-muted-foreground">CV'niz ilandaki gereksinimlerin <strong className="text-foreground">%72'sini</strong> karşılıyor.</p>
+                    </div>
+                    {/* Sahip Olunanlar */}
+                    <div>
+                      <p className="text-xs font-semibold text-green-600 dark:text-green-400 flex items-center gap-1 mb-2">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Sahip Olduklarınız
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Yazılım geliştirme','Karmaşık sistem analizi','Yüksek performanslı çözümler','Kalite odaklı yaklaşım','CI/CD bilgisi'].map(s => (
+                          <span key={s} className="text-[11px] bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 rounded-full px-2.5 py-1 font-medium">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Eksik Olanlar */}
+                    <div>
+                      <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mb-2">
+                        <XCircle className="w-3.5 h-3.5" /> Eksik Olanlar
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Mikroservis mimarisi','RESTful API tasarımı','Docker & Kubernetes','NoSQL yönetimi'].map(s => (
+                          <span key={s} className="text-[11px] bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 rounded-full px-2.5 py-1 font-medium">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Tab 2: AI Özet Taslakları ─── */}
+              {activeAiTab === 2 && (
+                <div className="p-6 md:p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">AI Özet Taslakları</p>
+                      <p className="text-xs text-muted-foreground">Profilinize göre 3 farklı ton — birini seçin, hemen kullanın</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      {
+                        tag: 'KURUMSAL & RESMİ', tagColor: 'text-blue-600 dark:text-blue-400',
+                        text: 'Yazılım geliştirme alanında sağlam bir temele sahip, sonuç odaklı bir profesyonelim. Karmaşık sistemlerin analizinden ve yüksek performanslı çözümlerin tasarımında etkin rol aldım.',
+                        active: true,
+                      },
+                      {
+                        tag: 'YARATICI & DİNAMİK', tagColor: 'text-violet-600 dark:text-violet-400',
+                        text: 'Yazılım dünyasının dinamiklerini yakından takip eden, sürekli öğrenmeye açık ve inovatif çözümler üreten bir geliştiriciyim. Modern teknolojilerle kullanıcı deneyimini zenginleştiriyorum.',
+                        active: false,
+                      },
+                      {
+                        tag: 'TEKNİK & LİDER', tagColor: 'text-amber-600 dark:text-amber-400',
+                        text: 'Derinlemesine teknik bilgiye sahip, liderlik vasıfları gelişmiş bir yazılım mühendisiyim. Büyük ölçekli projelerde teknik ekipleri yönlendirme ve mentorluk konusunda deneyimliyim.',
+                        active: false,
+                      },
+                    ].map(({ tag, tagColor, text, active }) => (
+                      <div key={tag} className={`rounded-xl border p-4 transition-all ${active ? 'border-primary shadow-md shadow-primary/15 bg-primary/5' : 'border-border bg-muted/20'}`}>
+                        <p className={`text-[10px] font-bold tracking-wider mb-2 ${tagColor}`}>{tag}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
+                        <button className={`mt-3 w-full rounded-lg py-1.5 text-xs font-semibold transition-colors ${active ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80 text-foreground'}`}>
+                          {active ? '✓ Seçili' : 'Bunu Kullan'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Tab 3: İçerik İyileştirme ─── */}
+              {activeAiTab === 3 && (
+                <div className="p-6 md:p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                      <Wand2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">AI İçerik İyileştirme</p>
+                      <p className="text-xs text-muted-foreground">Sıradan açıklamalar → güçlü, ölçülebilir başarılar</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-xl border border-border bg-muted/20 p-4">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Orijinal</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Takımla çalıştım ve projeler yaptım. Müşterilere yardım ettim. Sistemleri geliştirdim ve bakımını yaptım.
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-primary/40 bg-primary/5 p-4 relative overflow-hidden">
+                      <div className="absolute top-2 right-2">
+                        <span className="flex items-center gap-1 text-[10px] bg-primary/15 text-primary px-2 py-0.5 rounded-full font-medium">
+                          <Sparkles className="w-3 h-3" /> AI Önerisi
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-3">AI Önerisi</p>
+                      <p className="text-sm text-foreground leading-relaxed">
+                        10 kişilik çapraz fonksiyonel ekibi koordine ederek <strong>3 ürün lansmanını</strong> başarıyla tamamladım; müşteri memnuniyet skorunu <strong>%35 artırdım</strong> ve sistemin uptime oranını <strong>%99.8'e</strong> yükselttim.
+                      </p>
+                      <div className="flex gap-2 mt-4">
+                        <button className="flex-1 rounded-lg bg-primary py-1.5 text-xs font-semibold text-primary-foreground">Kabul Et</button>
+                        <button className="flex-1 rounded-lg border border-border py-1.5 text-xs font-semibold text-muted-foreground">Reddet</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                    <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+                    AI, belirsiz ifadeleri sayısal başarılara ve aksiyon fiillerine dönüştürür.
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Tab 4: Beceri Önerisi ─── */}
+              {activeAiTab === 4 && (
+                <div className="p-6 md:p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-9 h-9 rounded-xl bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
+                      <ListChecks className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">AI Beceri Önerisi</p>
+                      <p className="text-xs text-muted-foreground">Unvanınıza ve sektörünüze göre eksik becerileri keşfedin</p>
+                    </div>
+                  </div>
+                  <div className="max-w-lg">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-xs text-muted-foreground">Seçili Unvan:</span>
+                      <span className="text-xs font-bold bg-primary/10 text-primary border border-primary/20 rounded-full px-3 py-1">Full Stack Developer</span>
+                    </div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Önerilen Beceriler</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { skill: 'React', added: true },
+                        { skill: 'Node.js', added: true },
+                        { skill: 'TypeScript', added: false },
+                        { skill: 'Docker', added: false },
+                        { skill: 'PostgreSQL', added: false },
+                        { skill: 'GraphQL', added: false },
+                        { skill: 'Redis', added: false },
+                        { skill: 'Kubernetes', added: false },
+                        { skill: 'CI/CD', added: false },
+                        { skill: 'REST API', added: true },
+                      ].map(({ skill, added }) => (
+                        <motion.button
+                          key={skill}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
+                            added
+                              ? 'bg-green-500/15 border-green-500/30 text-green-700 dark:text-green-400'
+                              : 'bg-muted/40 border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                          }`}
+                        >
+                          {added ? <Check className="w-3 h-3" /> : <span className="text-base leading-none">+</span>}
+                          {skill}
+                        </motion.button>
+                      ))}
+                    </div>
+                    <button className="mt-5 flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm shadow-primary/25">
+                      <Sparkles className="w-4 h-4" />
+                      Tümünü Ekle
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Alt CTA */}
+          <motion.div
+            className="text-center mt-10"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+          >
+            <Link
+              to="/register"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all hover:shadow-lg shadow-primary/25"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Özellikleri Ücretsiz Dene
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <p className="mt-2 text-xs text-muted-foreground">Kredi kartı gerekmez · 30 saniyede başla</p>
+          </motion.div>
         </div>
       </section>
 
