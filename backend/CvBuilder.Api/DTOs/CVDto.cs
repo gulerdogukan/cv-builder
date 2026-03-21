@@ -39,7 +39,7 @@ public record UpdateCVRequest(
     Dictionary<string, object>? Data
 );
 
-public record EnhanceTextRequest(string Text);
+public record EnhanceTextRequest(string Text, string Language = "tr");
 public class EnhanceTextResponse
 {
     public string EnhancedText { get; init; }
@@ -69,7 +69,7 @@ public class ATSScoreResponse
     }
 }
 
-public record SuggestSkillsRequest(string Position);
+public record SuggestSkillsRequest(string Position, string Language = "tr");
 public class SuggestSkillsResponse
 {
     public List<string> Skills { get; set; } = new();
@@ -77,7 +77,7 @@ public class SuggestSkillsResponse
     public SuggestSkillsResponse(List<string> skills) => Skills = skills;
 }
 
-public record GenerateSummaryRequest(string CvDataJson, string? TargetPosition = null, string? TargetDescription = null);
+public record GenerateSummaryRequest(string CvDataJson, string? TargetPosition = null, string? TargetDescription = null, string Language = "tr");
 public class GenerateSummaryResponse
 {
     public List<string> Drafts { get; set; } = new();
@@ -92,7 +92,7 @@ public class LinkedInImportResponse
     public int? RemainingRequests { get; set; }
 }
 
-public record CoverLetterRequest(string CvDataJson, string JobDescription);
+public record CoverLetterRequest(string CvDataJson, string JobDescription, string Language = "tr");
 public class CoverLetterResponse
 {
     public string CoverLetter { get; init; }
@@ -110,7 +110,7 @@ public class JobMatchResponse
     public int? RemainingRequests { get; set; }
 }
 
-public record BulletizeRequest(string Description, string? JobTitle = null);
+public record BulletizeRequest(string Description, string? JobTitle = null, string Language = "tr");
 public class BulletizeResponse
 {
     public string Bullets { get; set; } = string.Empty;

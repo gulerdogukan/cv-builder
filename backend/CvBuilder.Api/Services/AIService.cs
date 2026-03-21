@@ -22,6 +22,20 @@ public class AIService : IAIService
 
     private int MaxSkills => int.TryParse(_config["AI:MaxSkillSuggestions"], out var n) ? n : 10;
 
+    /// <summary>
+    /// CV dil koduna göre AI'ya verilecek dil talimatını döndürür.
+    /// "en" için İngilizce, aksi hâlde Türkçe (varsayılan).
+    /// </summary>
+    private static string GetLangInstruction(string language) =>
+        string.Equals(language, "en", StringComparison.OrdinalIgnoreCase)
+            ? "Write in English."
+            : "Türkçe yaz.";
+
+    private static string GetActionVerbInstruction(string language) =>
+        string.Equals(language, "en", StringComparison.OrdinalIgnoreCase)
+            ? "Start each bullet with a strong English action verb (Developed, Designed, Led, Increased, etc.)."
+            : "Her madde güçlü Türkçe aksiyon fiiliyle başlasın (Geliştirdim, Tasarladım, Yönettim, vb.).";
+
     public AIService(IHttpClientFactory httpClientFactory, IConfiguration config, ILogger<AIService> logger)
     {
         _httpClientFactory = httpClientFactory;
@@ -31,16 +45,17 @@ public class AIService : IAIService
 
     // ── 1. EnhanceText ── Flash ───────────────────────────────────────────────
 
-    public async Task<string> EnhanceTextAsync(string text)
+    public async Task<string> EnhanceTextAsync(string text, string language = "tr")
     {
         if (string.IsNullOrWhiteSpace(text)) return text;
 
         try
         {
             var maxLen = Math.Min(text.Length + 200, 800);
-            const string system = """
+            var langInst = GetLangInstruction(language);
+            var system = $"""
                 Sen profesyonel bir CV yazarısın. ATS uyumlu, güçlü aksiyon fiilleri kullanan,
-                etkileyici ve özlü metin yazarsın. Türkçe yaz. Sadece geliştirilmiş metni döndür.
+                etkileyici ve özlü metin yazarsın. {langInst} Sadece geliştirilmiş metni döndür.
                 Kesinlikle markdown kullanma: **, *, #, ` gibi karakterler yasaktır.
                 """;
 
@@ -152,18 +167,19 @@ public class AIService : IAIService
 
     // ── 3. SuggestSkills ── Lite ──────────────────────────────────────────────
 
-    public async Task<List<string>> SuggestSkillsAsync(string position)
+    public async Task<List<string>> SuggestSkillsAsync(string position, string language = "tr")
     {
         if (string.IsNullOrWhiteSpace(position))
             return DefaultSkills();
 
         try
         {
-            var safePos = SanitizeInput(position, 200);
+            var safePos  = SanitizeInput(position, 200);
+            var langInst = GetLangInstruction(language);
 
             var user = $"""
                 '{safePos}' pozisyonu için en önemli {MaxSkills} teknik ve soft beceriyi listele.
-                Türkçe yaz. Her beceri 1-3 kelime olsun. Sadece virgülle ayrılmış liste döndür.
+                {langInst} Her beceri 1-3 kelime olsun. Sadece virgülle ayrılmış liste döndür.
                 ATS sistemlerinde aranabilecek anahtar kelimeler kullan.
                 Markdown kullanma, ** veya * karakterleri kullanma.
                 Örnek: Beceri 1, Beceri 2, Beceri 3
@@ -189,7 +205,7 @@ public class AIService : IAIService
 
     // ── 4. GenerateSummary ── Flash ───────────────────────────────────────────
 
-    public async Task<List<string>> GenerateSummaryAsync(string cvDataJson, string? targetPosition = null, string? targetDescription = null)
+    public async Task<List<string>> GenerateSummaryAsync(string cvDataJson, string? targetPosition = null, string? targetDescription = null, string language = "tr")
     {
         if (string.IsNullOrWhiteSpace(cvDataJson))
             return new List<string> { "Lütfen önce kişisel bilgilerinizi, eğitiminizi ve deneyimlerinizi doldurun." };
@@ -199,20 +215,21 @@ public class AIService : IAIService
             var safeCv   = SanitizeInput(cvDataJson, 6000);
             var safePos  = SanitizeInput(targetPosition ?? "", 200);
             var safeDesc = SanitizeInput(targetDescription ?? "", 400);
+            var langInst = GetLangInstruction(language);
 
             var positionCtx = !string.IsNullOrWhiteSpace(safePos)
                 ? $"\nÖNEMLİ: Aday bu özeti '{safePos}' pozisyonu için kullanacaktır. Tüm taslaklar bu role yönelik anahtar kelimeler içermelidir.{(!string.IsNullOrWhiteSpace(safeDesc) ? $" Hedef İlan: {safeDesc}" : "")}"
                 : "";
 
-            const string system = """
-                Sen profesyonel bir CV yazarısın. 3 farklı tonda, Türkçe CV özeti üretirsin.
+            var system = $"""
+                Sen profesyonel bir CV yazarısın. 3 farklı tonda CV özeti üretirsin. {langInst}
                 Çıktını SADECE JSON string dizisi olarak verirsin. Markdown, açıklama veya başlık ekleme.
                 Markdown kod bloğu (```json) KESİNLİKLE kullanma. Sadece ham JSON döndür.
                 Return ONLY valid JSON array. Do not wrap in markdown code blocks.
                 """;
 
             var user = $"""
-                Aşağıdaki CV verisine göre 3 FARKLI tonda özet taslağı oluştur (her biri 3-4 cümle, Türkçe, profesyonel).
+                Aşağıdaki CV verisine göre 3 FARKLI tonda özet taslağı oluştur (her biri 3-4 cümle, profesyonel). {langInst}
                 Markdown kullanma, ** veya * karakterleri kullanma. Düz metin yaz.
                 {positionCtx}
 
@@ -335,20 +352,21 @@ public class AIService : IAIService
 
     // ── 7. GenerateCoverLetter ── Flash ───────────────────────────────────────
 
-    public async Task<string> GenerateCoverLetterAsync(string cvDataJson, string jobDescription)
+    public async Task<string> GenerateCoverLetterAsync(string cvDataJson, string jobDescription, string language = "tr")
     {
         if (string.IsNullOrWhiteSpace(cvDataJson) || string.IsNullOrWhiteSpace(jobDescription))
             throw new ArgumentException("CV verisi ve İş İlanı boş olamaz.");
 
-        var safeCv  = SanitizeInput(cvDataJson,     maxLength: 4000);
-        var safeJob = SanitizeInput(jobDescription, maxLength: 3000);
+        var safeCv   = SanitizeInput(cvDataJson,     maxLength: 4000);
+        var safeJob  = SanitizeInput(jobDescription, maxLength: 3000);
+        var langInst = GetLangInstruction(language);
 
         try
         {
-            const string system = """
+            var system = $"""
                 Sen profesyonel bir Kariyer Danışmanı ve İnsan Kaynakları Uzmanısın.
                 <cv_data> ve <job_description> etiketleri arasındaki verilerden etkileyici,
-                profesyonel ve eksiksiz bir Türkçe ön yazı üretirsin.
+                profesyonel ve eksiksiz bir ön yazı üretirsin. {langInst}
                 Ön yazı mutlaka şu bölümleri içermeli: giriş paragrafı, deneyim/beceri paragrafı,
                 motivasyon paragrafı ve kapanış paragrafı. Toplam en az 300 kelime yaz.
                 Sadece ön yazı metnini döndür. Markdown kullanma, ** veya * karakterleri kullanma.
@@ -441,19 +459,20 @@ public class AIService : IAIService
 
     // ── 9. BulletizeDescription ── Lite ──────────────────────────────────────
 
-    public async Task<string> BulletizeDescriptionAsync(string description, string? jobTitle = null)
+    public async Task<string> BulletizeDescriptionAsync(string description, string? jobTitle = null, string language = "tr")
     {
         if (string.IsNullOrWhiteSpace(description))
             return description;
 
         try
         {
-            var safeDesc = SanitizeInput(description, 2000);
-            var roleCtx  = string.IsNullOrWhiteSpace(jobTitle) ? "" : $" (Pozisyon: {SanitizeInput(jobTitle, 100)})";
+            var safeDesc   = SanitizeInput(description, 2000);
+            var roleCtx    = string.IsNullOrWhiteSpace(jobTitle) ? "" : $" (Pozisyon: {SanitizeInput(jobTitle, 100)})";
+            var actionInst = GetActionVerbInstruction(language);
 
             var user = $"""
                 Aşağıdaki iş deneyimi açıklamasını{roleCtx} 3-5 madde halinde yeniden yaz.
-                Her madde güçlü Türkçe aksiyon fiiliyle başlasın (Geliştirdim, Tasarladım, Yönettim, vb.).
+                {actionInst}
                 Mümkünse ölçülebilir sonuçlar ekle. Her maddeyi "• " ile başlat.
                 SADECE madde listesini döndür. Markdown kullanma, ** veya * karakterleri kullanma.
 

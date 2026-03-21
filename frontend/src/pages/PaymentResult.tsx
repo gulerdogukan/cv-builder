@@ -19,8 +19,13 @@ export default function PaymentResult() {
 
   useEffect(() => {
     if (!token) {
+      // Iyzico bazen form POST ile yönlendirir (query param yerine body).
+      // SPA'da form POST body okunamaz — kullanıcıya açıklayıcı mesaj göster.
       setResultState('error');
-      setMessage('Geçersiz ödeme bağlantısı. Token bulunamadı.');
+      setMessage(
+        'Ödeme token\'ı alınamadı. Eğer ödemeniz gerçekleştiyse lütfen destek ekibiyle iletişime geçin. ' +
+        'Aksi hâlde birkaç dakika sonra tekrar deneyin.'
+      );
       return;
     }
 

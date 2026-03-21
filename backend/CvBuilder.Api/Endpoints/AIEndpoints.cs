@@ -34,7 +34,7 @@ public static class AIEndpoints
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
                     statusCode: 429);
 
-            var enhanced = await aiService.EnhanceTextAsync(request.Text);
+            var enhanced = await aiService.EnhanceTextAsync(request.Text, request.Language);
             return Results.Ok(new EnhanceTextResponse(enhanced)
             {
                 RemainingRequests = rateLimitResult.Remaining
@@ -107,7 +107,7 @@ public static class AIEndpoints
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
                     statusCode: 429);
 
-            var skills = await aiService.SuggestSkillsAsync(request.Position);
+            var skills = await aiService.SuggestSkillsAsync(request.Position, request.Language);
             return Results.Ok(new SuggestSkillsResponse(skills)
             {
                 RemainingRequests = rateLimitResult.Remaining
@@ -130,7 +130,7 @@ public static class AIEndpoints
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
                     statusCode: 429);
 
-            var drafts = await aiService.GenerateSummaryAsync(request.CvDataJson, request.TargetPosition, request.TargetDescription);
+            var drafts = await aiService.GenerateSummaryAsync(request.CvDataJson, request.TargetPosition, request.TargetDescription, request.Language);
             return Results.Ok(new GenerateSummaryResponse(drafts)
             {
                 RemainingRequests = rateLimitResult.Remaining
@@ -244,7 +244,7 @@ public static class AIEndpoints
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
                     statusCode: 429);
 
-            var letter = await aiService.GenerateCoverLetterAsync(request.CvDataJson, request.JobDescription);
+            var letter = await aiService.GenerateCoverLetterAsync(request.CvDataJson, request.JobDescription, request.Language);
             return Results.Ok(new CoverLetterResponse(letter)
             {
                 RemainingRequests = rateLimitResult.Remaining
@@ -322,7 +322,7 @@ public static class AIEndpoints
                     new { error = "Günlük AI kullanım limitine ulaştınız.", remaining = 0, limitResetAt = rateLimitResult.ResetAt },
                     statusCode: 429);
 
-            var bullets = await aiService.BulletizeDescriptionAsync(request.Description, request.JobTitle);
+            var bullets = await aiService.BulletizeDescriptionAsync(request.Description, request.JobTitle, request.Language);
             return Results.Ok(new BulletizeResponse { Bullets = bullets, RemainingRequests = rateLimitResult.Remaining });
         });
     }

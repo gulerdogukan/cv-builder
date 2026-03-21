@@ -34,15 +34,21 @@ public class ErrorHandlingMiddleware
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
 
-            var response = new
+            try
             {
-                error = "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
-                details = context.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment()
-                    ? ex.Message
-                    : null
-            };
-
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+                var isDev = context.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment();
+                var response = new
+                {
+                    error = "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+                    details = isDev ? ex.Message : null
+                };
+                await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            }
+            catch
+            {
+                // JSON serialization da başarısız olursa minimal plain-text fallback
+                await context.Response.WriteAsync("{\"error\":\"Internal server error\"}");
+            }
         }
     }
 }
