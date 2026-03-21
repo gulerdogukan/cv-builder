@@ -13,6 +13,7 @@ interface AuthStore {
   loginWithGoogle: () => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   syncUserWithBackend: () => Promise<void>;
 }
 
@@ -139,11 +140,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   loginWithGoogle: async () => {
+    // redirectTo: /auth/callback — Supabase PKCE code exchange burada tamamlanır.
+    // /dashboard'a yönlendirmek session oluşmasını engeller → kullanıcı giriş yapamaz.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      set({ isLoading: false });
+      throw new Error(error.message);
+    }
+    // Başarılıysa tarayıcı Google'a yönlendirir; isLoading burada anlamlı değil.
+    // Hata durumunda isLoading sıfırlanmazsa buton disabled kalır.
   },
 
   register: async ({ email, password, fullName }: RegisterCredentials) => {
@@ -179,5 +187,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   logout: async () => {
     await supabase.auth.signOut();
     set({ user: null, isAuthenticated: false });
+  },
+
+  resetPassword: async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    });
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes('rate limit') || msg.includes('too many'))
+        throw new Error('Çok fazla deneme yapıldı. Lütfen birkaç dakika bekleyin.');
+      throw new Error('Şifre sıfırlama e-postası gönderilemedi. Lütfen tekrar deneyin.');
+    }
   },
 }));

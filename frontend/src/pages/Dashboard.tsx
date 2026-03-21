@@ -28,6 +28,12 @@ export default function Dashboard() {
   }, [fetchCVList]);
 
   const handleCreateCV = async () => {
+    // Ücretsiz kullanıcı limiti: en fazla 1 CV
+    if (user?.plan !== 'paid' && cvList.length >= 1) {
+      showToast('Ücretsiz planda yalnızca 1 CV oluşturabilirsiniz. Premium\'a geçerek sınırsız CV oluşturun.', 'error');
+      navigate('/pricing');
+      return;
+    }
     setIsCreating(true);
     try {
       const cv = await createCV('Yeni CV');
@@ -260,17 +266,34 @@ export default function Dashboard() {
         )}
 
         {/* Alt bilgi — plan durumu */}
-        {user && user.plan === 'free' && cvList.length > 0 && (
-          <div className="mt-8 rounded-xl border bg-primary/5 p-4 flex items-center justify-between">
+        {user && user.plan === 'free' && (
+          <div className={`mt-8 rounded-xl border p-4 flex items-center justify-between gap-4 ${
+            cvList.length >= 1
+              ? 'bg-amber-50/50 border-amber-200/60 dark:bg-amber-900/10 dark:border-amber-700/30'
+              : 'bg-primary/5 border-primary/20'
+          }`}>
             <div>
-              <p className="text-sm font-medium">Ücretsiz plandasınız</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Premium'a geçerek sınırsız CV oluşturun ve PDF indirin.
-              </p>
+              {cvList.length >= 1 ? (
+                <>
+                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                    ⚠️ CV limitine ulaştınız
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Ücretsiz planda yalnızca 1 CV oluşturabilirsiniz. Premium'a geçerek sınırsız CV ve tüm şablonlara erişin.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium">Ücretsiz plandasınız</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Premium'a geçerek sınırsız CV oluşturun ve PDF indirin.
+                  </p>
+                </>
+              )}
             </div>
             <Link
               to="/pricing"
-              className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap"
+              className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap shrink-0"
             >
               Planları Gör
             </Link>

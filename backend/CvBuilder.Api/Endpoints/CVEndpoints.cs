@@ -1,6 +1,9 @@
+using CvBuilder.Api.Data;
 using CvBuilder.Api.DTOs;
 using CvBuilder.Api.Middleware;
+using CvBuilder.Api.Models;
 using CvBuilder.Api.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace CvBuilder.Api.Endpoints;
 
@@ -33,10 +36,25 @@ public static class CVEndpoints
         });
 
         // POST /api/cvs — Yeni CV oluştur
-        group.MapPost("/", async (CreateCVRequest request, HttpContext context, ICVService cvService) =>
+        group.MapPost("/", async (CreateCVRequest request, HttpContext context, ICVService cvService, AppDbContext db) =>
         {
             var userId = context.GetUserId();
             if (userId is null) return Results.Unauthorized();
+
+            // Ücretsiz kullanıcı limiti: en fazla 1 CV
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId.Value);
+            if (user is null) return Results.Unauthorized();
+
+            if (user.Plan == PlanType.Free)
+            {
+                var cvCount = await db.CVs.CountAsync(c => c.UserId == userId.Value);
+                if (cvCount >= 1)
+                {
+                    return Results.Json(
+                        new { error = "Ücretsiz planda yalnızca 1 CV oluşturabilirsiniz. Premium'a geçerek sınırsız CV oluşturun.", code = "FREE_LIMIT_REACHED" },
+                        statusCode: 403);
+                }
+            }
 
             var cv = await cvService.CreateCVAsync(userId.Value, request);
             return Results.Created($"/api/cvs/{cv.Id}", cv);

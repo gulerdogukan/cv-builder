@@ -32,7 +32,11 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(4);
-  const { login, loginWithGoogle, isLoading, isAuthenticated, user } = useAuthStore();
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotStatus, setForgotStatus] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle');
+  const [forgotError, setForgotError] = useState('');
+  const { login, loginWithGoogle, resetPassword, isLoading, isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -50,6 +54,20 @@ export default function Login() {
   }, [isAuthenticated, countdown, navigate, from]);
 
   const handleGoNow = useCallback(() => navigate(from, { replace: true }), [navigate, from]);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) return;
+    setForgotStatus('loading');
+    setForgotError('');
+    try {
+      await resetPassword(forgotEmail.trim());
+      setForgotStatus('sent');
+    } catch (err) {
+      setForgotError(err instanceof Error ? err.message : 'Bir hata oluştu.');
+      setForgotStatus('error');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,6 +179,13 @@ export default function Login() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label htmlFor="password" className="block text-sm font-medium">Şifre</label>
+              <button
+                type="button"
+                onClick={() => { setShowForgot(true); setForgotEmail(email); setForgotStatus('idle'); }}
+                className="text-xs text-primary hover:underline"
+              >
+                Şifremi Unuttum
+              </button>
             </div>
             <input
               id="password"
@@ -194,6 +219,53 @@ export default function Login() {
           <Link to="/register" className="text-primary font-medium hover:underline">Kayıt Ol</Link>
         </p>
       </div>
+
+      {/* Şifremi Unuttum Modal */}
+      {showForgot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border bg-card p-6 shadow-xl">
+            <h3 className="text-lg font-bold mb-1">Şifre Sıfırlama</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Kayıtlı e-posta adresinize şifre sıfırlama bağlantısı göndereceğiz.
+            </p>
+
+            {forgotStatus === 'sent' ? (
+              <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-700">
+                ✓ Sıfırlama bağlantısı <strong>{forgotEmail}</strong> adresine gönderildi. Lütfen gelen kutunuzu kontrol edin.
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-3">
+                {forgotStatus === 'error' && (
+                  <p className="text-sm text-destructive">{forgotError}</p>
+                )}
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="ornek@email.com"
+                  required
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={forgotStatus === 'loading'}
+                  className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                >
+                  {forgotStatus === 'loading' ? 'Gönderiliyor...' : 'Sıfırlama Bağlantısı Gönder'}
+                </button>
+              </form>
+            )}
+
+            <button
+              onClick={() => setShowForgot(false)}
+              className="mt-3 w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Kapat
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

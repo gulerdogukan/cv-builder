@@ -34,7 +34,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/pricing" element={<Pricing />} />
-        <Route path="/payment/result" element={<PaymentResult />} />
+        <Route
+          path="/payment/result"
+          element={
+            <ProtectedRoute>
+              <PaymentResult />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/cv/:id" element={<PublicCVPage />} />
 

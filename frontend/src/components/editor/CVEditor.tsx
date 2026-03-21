@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { CVData, SectionType, TemplateType } from '@/types/cv.types';
 import type { ATSResult } from '@/hooks/useAI';
 import { useCV } from '@/hooks/useCV';
@@ -41,6 +42,7 @@ export default function CVEditor({ onTemplateChange }: Props) {
   const { getATSScore, isLoading: isAILoading, isRateLimited, remainingRequests } = useAI();
   const { user } = useAuthStore();
   const { showToast: _showToast } = useNotificationStore();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabKey>('personal');
   const [showAtsModal, setShowAtsModal] = useState(false);
   const [atsResult, setAtsResult] = useState<ATSResult | null>(null);
@@ -72,6 +74,13 @@ export default function CVEditor({ onTemplateChange }: Props) {
   };
 
   const handleTemplateChange = (t: TemplateType) => {
+    const isPremium = TEMPLATE_INFO[t].isPremium;
+    const isLocked  = isPremium && user?.plan !== 'paid';
+    if (isLocked) {
+      _showToast(`"${TEMPLATE_INFO[t].label}" şablonu Premium'a özeldir. Yükseltmek için tıklayın.`, 'error');
+      navigate('/pricing');
+      return;
+    }
     setTemplate(t);
     onTemplateChange(t);
   };
@@ -148,8 +157,9 @@ export default function CVEditor({ onTemplateChange }: Props) {
       {/* ATS Simülasyon & Skor Şeridi */}
       <div className="h-11 bg-amber-500/5 px-4 border-b border-amber-500/10 flex items-center justify-center gap-8 relative overflow-hidden shrink-0">
         <AnimatePresence mode="wait">
-          {(currentCV.atsScore ?? 0) > 0 && (
-            <motion.div 
+          {(currentCV.atsScore ?? 0) > 0 ? (
+            <motion.div
+              key="score"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
@@ -162,6 +172,15 @@ export default function CVEditor({ onTemplateChange }: Props) {
                 ATS SKORU: {currentCV?.atsScore || 0}/100
               </div>
             </motion.div>
+          ) : (
+            <motion.span
+              key="cta"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-[10px] font-black text-amber-500/50 uppercase tracking-widest hidden sm:inline"
+            >
+              CV'niz henüz analiz edilmedi →
+            </motion.span>
           )}
         </AnimatePresence>
 
@@ -171,7 +190,7 @@ export default function CVEditor({ onTemplateChange }: Props) {
           className="group relative flex items-center gap-2 px-8 py-1.5 bg-amber-500 text-white rounded-full text-[11px] font-black uppercase tracking-widest transition-all hover:bg-amber-600 active:scale-95 shadow-lg shadow-amber-500/20 disabled:opacity-50"
         >
           <Sparkles className={`w-3.5 h-3.5 ${isAILoading ? 'animate-spin' : 'group-hover:scale-125 transition-transform'}`} />
-          {isAILoading ? 'SİMÜLE EDİLİYOR...' : 'SİMÜLE ET'}
+          {isAILoading ? 'SİMÜLE EDİLİYOR...' : 'ATS ANALİZİ YAP'}
         </button>
       </div>
 
