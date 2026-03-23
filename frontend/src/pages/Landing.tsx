@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Sparkles, FileDown, Zap, ArrowRight, Play, Check, ChevronDown, Star,
+  Sparkles, FileDown, Zap, ArrowRight, Play, Check, ChevronDown,
   FileText, Sun, Moon, Linkedin, FileSearch, Target,
   BarChart2, Wand2, ListChecks, BookOpen, TrendingUp, CheckCircle2, XCircle
 } from 'lucide-react';
@@ -104,10 +104,10 @@ const FAQS = [
 ];
 
 const STATS = [
-  { value: '10.000+', label: 'Oluşturulan CV' },
   { value: '%94', label: 'ATS Geçme Oranı' },
   { value: '3 dk', label: 'Ortalama Hazırlama Süresi' },
-  { value: '4.8/5', label: 'Kullanıcı Puanı' },
+  { value: 'AI', label: 'Destekli Analiz' },
+  { value: 'Hızlı', label: 'PDF Dışa Aktar' },
 ];
 
 // ── Bileşenler ────────────────────────────────────────────────────────────────
@@ -347,11 +347,12 @@ export default function Landing() {
             Kredi kartı gerekmez · Ücretsiz plan sonsuza kadar ücretsiz
           </motion.p>
           
-          <motion.div variants={itemVariants} className="mt-8 flex items-center justify-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-            ))}
-            <span className="ml-2 text-sm text-muted-foreground">4.8/5 · Sektör Lideri</span>
+          <motion.div 
+            variants={itemVariants} 
+            className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground/80"
+          >
+            <Zap className="w-3 h-3 text-amber-500" />
+            <span>30 saniyede ücretsiz kaydolun</span>
           </motion.div>
         </motion.div>
       </section>

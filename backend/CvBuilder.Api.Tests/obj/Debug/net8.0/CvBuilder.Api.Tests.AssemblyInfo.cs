@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CvBuilder.Api.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3aa60c998c57d5832972e0a0b39f0b00c6c422a7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+510012bdbf0e80760611fab59b68a318bc310fbb")]
 [assembly: System.Reflection.AssemblyProductAttribute("CvBuilder.Api.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CvBuilder.Api.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
